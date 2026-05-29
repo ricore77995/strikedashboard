@@ -64,7 +64,7 @@ Phase 1 liga os pontos reais (pointsPerClass, boosts, streaks, milestones) e faz
          ▼                 ▼                  ▼
    ┌──────────┐    ┌──────────────┐   ┌──────────────┐
    │ Admin UI │    │ WhatsApp Bot │   │ Monthly      │
-   │ (5 pages)│    │ Onboarding   │   │ Snapshot     │
+   │ (6 pages)│    │ Onboarding   │   │ Snapshot     │
    └──────────┘    └──────────────┘   └──────────────┘
 ```
 
