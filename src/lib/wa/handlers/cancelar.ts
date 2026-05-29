@@ -35,6 +35,7 @@ export async function handleCancelar(session: SessionRow): Promise<void> {
   if (!customer) {
     await db.waEvent.create({ data: { kind: "LOOKUP_MISS", phoneE164 } });
     await sendText(phoneE164, NO_PLAN_LOOKUP);
+    await endInteraction(session, phoneE164);
     return;
   }
 
@@ -53,6 +54,7 @@ export async function handleCancelar(session: SessionRow): Promise<void> {
 
   if (items.length === 0) {
     await sendText(phoneE164, NO_SIGNUPS);
+    await endInteraction(session, phoneE164);
     return;
   }
 
@@ -60,6 +62,7 @@ export async function handleCancelar(session: SessionRow): Promise<void> {
   // instead of a list of ⏰ rows the aluno cannot act on.
   if (items.every((i) => !i.cancellable)) {
     await sendText(phoneE164, "Não tens aulas canceláveis de momento (corte 2h antes da aula).");
+    await endInteraction(session, phoneE164);
     return;
   }
 

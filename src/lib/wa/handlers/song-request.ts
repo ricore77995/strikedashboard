@@ -242,6 +242,11 @@ export async function handleSongConfirm(session: SessionRow, buttonId: string): 
       await endInteraction(session, phoneE164);
       return;
     }
+    // Unknown button mid-confirm — re-show the confirm prompt
+    await sendButton(
+      phoneE164,
+      renderFlowHint("Confirma ou cancela o pedido de música.", "song_cancel", "Cancelar"),
+    );
     return;
   }
 

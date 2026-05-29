@@ -35,4 +35,5 @@ export async function handleOutros(phoneE164: string): Promise<void> {
 // "Contacto" sub-option — static message for human hand-off.
 export async function handleContacto(phoneE164: string): Promise<void> {
   await sendText(phoneE164, CONTACTO_MSG);
+  await sendMenu(phoneE164);
 }

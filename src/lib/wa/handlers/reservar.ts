@@ -21,6 +21,7 @@ export async function handleReservar(session: SessionRow): Promise<void> {
   if (!customer) {
     await db.waEvent.create({ data: { kind: "LOOKUP_MISS", phoneE164 } });
     await sendText(phoneE164, FALLBACK_LOOKUP_MISS);
+    await endInteraction(session, phoneE164);
     return;
   }
 
@@ -32,6 +33,7 @@ export async function handleReservar(session: SessionRow): Promise<void> {
   const payload = renderClassList(bookable as YogoClassLite[], today, tomorrow);
   if (payload.type === "text") {
     await sendText(phoneE164, bookable.length === 0 ? NO_BOOKABLE : payload.body);
+    await endInteraction(session, phoneE164);
     return;
   }
 

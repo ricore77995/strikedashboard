@@ -1,4 +1,5 @@
 import { sendText } from "@/lib/wa/meta";
+import { sendMenu } from "@/lib/wa/handlers/menu";
 import { userBookingsNext24h } from "@/lib/yogo/signups";
 import { ensureClassPlaylist } from "@/lib/wa/handlers/song-request";
 
@@ -17,6 +18,7 @@ export async function handlePlaylistList(phoneE164: string): Promise<void> {
   const bookings = await userBookingsNext24h(phoneE164);
   if (bookings.length === 0) {
     await sendText(phoneE164, NO_CLASSES);
+    await sendMenu(phoneE164);
     return;
   }
 
@@ -34,8 +36,10 @@ export async function handlePlaylistList(phoneE164: string): Promise<void> {
 
   if (!any) {
     await sendText(phoneE164, NO_CLASSES);
+    await sendMenu(phoneE164);
     return;
   }
 
   await sendText(phoneE164, lines.join("\n"));
+  await sendMenu(phoneE164);
 }
