@@ -5,6 +5,9 @@ import { appendEvent } from "@/lib/gamification/event-log";
 import { isOptedIn } from "@/lib/gamification/consent";
 import { classify } from "@/lib/yogo/classify";
 import { getCurrentPeriod, getTodayISO } from "./shared";
+import { resolvePlanCategory, getPointsPerClass } from "@/lib/gamification/plan-resolver";
+import { checkCreditGates } from "@/lib/gamification/gates";
+import type { PlanCategory } from "@/lib/gamification/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -41,20 +44,20 @@ export interface PollResult {
 // ─── Membership snapshot lookup ──────────────────────────────────────
 
 /**
- * Get the customer's membership state from the most recent snapshot.
- * Returns null if no snapshot exists (first observation).
+ * Get the customer's membership state and plan name from the most recent snapshot.
  */
-async function getMembershipState(customerId: number): Promise<string | null> {
-  // Look for a recent snapshot — could be from yesterday or today
+async function getMembershipInfo(customerId: number): Promise<{
+  state: string | null;
+  planCategory: PlanCategory;
+}> {
   const snapshot = await db.yogoMembershipSnapshot.findFirst({
     where: { userId: customerId },
     orderBy: { snapshotDate: "desc" },
   });
 
-  if (!snapshot) return null;
+  if (!snapshot) return { state: null, planCategory: "OTHER" };
 
-  // Use classify to determine state
-  const state = classify(
+  const membershipState = classify(
     {
       status: snapshot.status ?? "unknown",
       status_text: snapshot.statusText ?? "",
@@ -63,7 +66,9 @@ async function getMembershipState(customerId: number): Promise<string | null> {
     getTodayISO(),
   );
 
-  return state;
+  const planCategory = resolvePlanCategory(snapshot.membershipTypeName);
+
+  return { state: membershipState, planCategory };
 }
 
 // ─── DOB passive capture ─────────────────────────────────────────────
@@ -150,19 +155,31 @@ export async function pollClasses(): Promise<PollResult> {
         continue;
       }
 
-      // 5. Classify gate — check membership state
-      const membershipState = await getMembershipState(customerId);
+      // 5. Classify gate — check membership state and resolve plan
+      const { state: membershipState, planCategory } = await getMembershipInfo(customerId);
       const isActive = membershipState === "active" || membershipState === null;
 
-      // 6. Emit event
-      //    Phase 0: pointsDelta=0 always
-      //    Non-active members still get event for audit, but with pointsDelta=0
-      const pointsDelta = 0; // Phase 0
+      // 6. Compute points
+      //    Phase 0 (flag off): pointsDelta=0 always
+      //    Phase 1 (flag on): resolve plan, check gates, compute real points
+      let pointsDelta = 0;
+      let xpDelta = 0;
+      const realPointsEnabled = process.env.STRIKELAB_REAL_POINTS_ENABLED === "true";
+
+      if (realPointsEnabled && isActive) {
+        const gates = await checkCreditGates(customerId);
+        if (gates.passed) {
+          pointsDelta = getPointsPerClass(planCategory);
+          xpDelta = pointsDelta; // Base only, boosts added in Sprint 2
+        }
+      }
+
       const payload: Record<string, unknown> = {
         classId: cls.id,
         className: cls.class_type?.name,
         checkedInAt: signup.checked_in,
         membershipState,
+        planCategory,
       };
 
       if (!isActive) {
@@ -174,7 +191,7 @@ export async function pollClasses(): Promise<PollResult> {
         customerId,
         eventType: "checkin_observed",
         pointsDelta,
-        xpDelta: 0,
+        xpDelta,
         payloadJson: payload,
         source: "cron",
         idempotencyKey: `checkin:${customerId}:${cls.id}`,
