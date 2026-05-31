@@ -7,6 +7,8 @@ import { classify } from "@/lib/yogo/classify";
 import { getCurrentPeriod, getTodayISO } from "./shared";
 import { resolvePlanCategory, getPointsPerClass } from "@/lib/gamification/plan-resolver";
 import { checkCreditGates } from "@/lib/gamification/gates";
+import { getActiveBoostsForCheckin, computeBoostMultiplier } from "@/lib/gamification/boosts";
+import { materializeState } from "@/lib/gamification/state";
 import type { PlanCategory } from "@/lib/gamification/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -161,16 +163,30 @@ export async function pollClasses(): Promise<PollResult> {
 
       // 6. Compute points
       //    Phase 0 (flag off): pointsDelta=0 always
-      //    Phase 1 (flag on): resolve plan, check gates, compute real points
+      //    Phase 1 (flag on): resolve plan, check gates, compute real points + boosts
       let pointsDelta = 0;
       let xpDelta = 0;
+      let boostsApplied: string[] = [];
       const realPointsEnabled = process.env.STRIKELAB_REAL_POINTS_ENABLED === "true";
 
       if (realPointsEnabled && isActive) {
         const gates = await checkCreditGates(customerId);
         if (gates.passed) {
-          pointsDelta = getPointsPerClass(planCategory);
-          xpDelta = pointsDelta; // Base only, boosts added in Sprint 2
+          const base = getPointsPerClass(planCategory);
+
+          // Compute boosts (Sprint 2)
+          const state = await materializeState(customerId);
+          const activeBoosts = state
+            ? await getActiveBoostsForCheckin(customerId, state, {
+                planCategory,
+                checkinDate: new Date(),
+              })
+            : [];
+          const multiplier = computeBoostMultiplier(activeBoosts);
+
+          pointsDelta = Math.round(base * multiplier);
+          xpDelta = base; // XP is always unboosted
+          boostsApplied = activeBoosts.map((b) => b.id);
         }
       }
 
@@ -180,6 +196,7 @@ export async function pollClasses(): Promise<PollResult> {
         checkedInAt: signup.checked_in,
         membershipState,
         planCategory,
+        boostsApplied: boostsApplied.length > 0 ? boostsApplied : undefined,
       };
 
       if (!isActive) {
