@@ -8,7 +8,12 @@ import { getCurrentPeriod, getTodayISO } from "./shared";
 import { resolvePlanCategory, getPointsPerClass } from "@/lib/gamification/plan-resolver";
 import { checkCreditGates } from "@/lib/gamification/gates";
 import { getActiveBoostsForCheckin, computeBoostMultiplier } from "@/lib/gamification/boosts";
-import { materializeState } from "@/lib/gamification/state";
+import { materializeState, persistState } from "@/lib/gamification/state";
+import { checkStreak } from "@/lib/gamification/streak";
+import { checkMilestones } from "@/lib/gamification/milestones";
+import { checkPerfectWeek } from "@/lib/gamification/perfect-week";
+import { checkComeback } from "@/lib/gamification/comeback";
+import { checkSuperaRitmo } from "@/lib/gamification/supera-ritmo";
 import type { PlanCategory } from "@/lib/gamification/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -217,6 +222,20 @@ export async function pollClasses(): Promise<PollResult> {
 
       if (appended.written) {
         result.checkinsObserved++;
+
+        // Phase 1 post-checkin hooks (gated by flag)
+        if (realPointsEnabled && pointsDelta > 0) {
+          // Persist updated state so streak/milestone checks have current data
+          const updatedState = await materializeState(customerId);
+          if (updatedState) await persistState(updatedState);
+
+          // Run detection modules (all are internally idempotent)
+          await checkStreak(customerId);
+          await checkMilestones(customerId, planCategory);
+          await checkPerfectWeek(customerId, planCategory);
+          await checkComeback(customerId);
+          await checkSuperaRitmo(customerId, planCategory);
+        }
       }
     }
   }
