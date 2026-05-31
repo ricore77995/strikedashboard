@@ -19,6 +19,7 @@ import { ALL_SUB_IDS } from "../src/lib/constants";
 
 const YOGO_BASE = process.env.YOGO_BASE || "https://api.yogo.dk";
 const YOGO_TOKEN = process.env.YOGO_TOKEN;
+const YOGO_ORIGIN = process.env.YOGO_ORIGIN || "https://strikershouse.yogobooking.pt";
 
 if (!YOGO_TOKEN) {
   console.error("Error: YOGO_TOKEN env var required");
@@ -41,6 +42,9 @@ async function yogoFetch<T>(path: string, body?: unknown): Promise<T> {
       Authorization: `Bearer ${YOGO_TOKEN}`,
       "x-yogo-request-context": "admin",
       "Content-Type": "application/json",
+      Accept: "application/json, text/plain, */*",
+      Origin: YOGO_ORIGIN,
+      Referer: `${YOGO_ORIGIN}/`,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
