@@ -22,9 +22,9 @@ page), then to students (self-service). One verified slice at a time.
 
 | # | Slice | Status |
 |---|-------|--------|
-| 1 | Enhanced admin student detail page | ✅ Done (branch `feat/strikelab-admin-detail-enhance`) |
-| 2 | Student self-service API (`/api/strikelab/me`) | ⏳ Blocked on auth decision (now made — see below) |
-| 3 | Student-facing dashboard page | ⏳ Depends on #2 |
+| 1 | Enhanced admin student detail page | ✅ Done (merged to `main`) |
+| 2 | Student self-service API (`/api/strikelab/me`) | ✅ Done |
+| 3 | Student-facing dashboard page | ⏳ Next — consumes `/api/strikelab/me` |
 
 ## Decision — Student authentication = WhatsApp magic-link token
 
@@ -61,6 +61,38 @@ state via a *student-scoped* endpoint — NOT the admin endpoint.
 **Verification:** `tsc --noEmit` clean · production build compiles · 110 gamification
 tests pass · endpoint returns HTTP 200 with correct shape (verified live against a
 seeded local `prisma/dev.db`, then DB restored) · page route serves HTTP 200.
+
+## Slice 2 — Student self-service API (done)
+
+**Goal:** a student opens a WhatsApp magic link → sees their own progress, no login.
+
+**New files:**
+- `src/lib/gamification/student-link.ts` — `mintStudentToken()` / `verifyStudentToken()`.
+  HMAC-SHA256 over `{cid, exp}`, format `1.<b64url(payload)>.<b64url(sig)>`, timing-safe
+  compare (mirrors `lib/wa/verify.ts`). TTL **30 days** (`STUDENT_LINK_TTL_DAYS`).
+  Fails closed: `verify` returns `{ok:false,reason:"no_secret"}` and `mint` throws when
+  `STRIKELAB_LINK_SECRET` is unset. Signature checked **before** the payload is trusted.
+- `tests/lib/gamification/student-link.test.ts` — 8 tests (round-trip, tampered payload,
+  tampered sig, wrong secret, expired, TTL boundary, malformed, no-secret). TDD'd.
+- `src/lib/gamification/event-view.ts` — shared `parseEventPayload()` extracted from the
+  admin route so both endpoints share one parser (no duplication). Admin route refactored
+  to use it.
+- `src/app/api/strikelab/me/route.ts` — `GET ?t=<token>`. Verifies → returns student-safe
+  view (monthlyPoints, lifetimeXp, tier, tierProgress, streak, shield, last 20 events).
+  **No phone/email/consent/pause data.** Status map: missing/invalid/expired → 401,
+  `no_secret` → 503, unknown customer → 404, erased identity → 410. Null state → zeroed
+  defaults so the page always renders.
+- `.env.example` — added `STRIKELAB_LINK_SECRET`.
+
+**Verification:** `tsc` clean · build compiles (`/api/strikelab/me` route present) · 118
+gamification tests pass (8 new) · all endpoint paths verified live against seeded local DB
+(200 / 401 missing / 401 tampered / 401 expired / 404 unknown). A hand-minted token
+(independent reimplementation of the format) verified against the real lib.
+
+### ⚠️ Deploy TODO
+Set **`STRIKELAB_LINK_SECRET`** in Vercel (all envs) before slice 3 ships —
+`openssl rand -base64 32`. Until set, `/api/strikelab/me` returns **503** (fail-closed),
+so deploying without it is safe but the student page won't work.
 
 ## Gotchas found
 
