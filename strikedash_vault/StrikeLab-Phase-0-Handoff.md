@@ -27,7 +27,7 @@ StrikeLab é o sistema de gamificação da Striker's House. Phase 0 shipou toda 
 
 Phase 1 liga os pontos reais (pointsPerClass, boosts, streaks, milestones) e faz replay retroactivo dos eventos Phase 0.
 
-**Numbers:** 21 commits · 37 files · ~5k LOC · 288 tests (76 gamification-specific)
+**Numbers:** 23 commits · 40 files · ~5.3k LOC · 396 tests (60 gamification-specific)
 **All feature flags OFF by default. Nothing runs until you flip them.**
 
 **Purpose of this doc:** Your reference for picking up Phase 1. Every table, every file, every decision, every gotcha — in one place. Not a marketing doc. Not a tutorial. The truth.
@@ -354,6 +354,20 @@ Filters accounts that are not real leads:
 3. Gated by `STRIKELAB_POLL_MEMBERSHIPS_ENABLED`
 4. Returns JSON with counts: `{ processed, events }`
 
+### Monthly Reset — 1st of month at 00:05 UTC
+
+**File:** `src/app/api/cron/strikelab-monthly-reset/route.ts`
+**Library:** `src/lib/gamification/reset.ts`
+
+1. Checks idempotency: if a completed audit exists for the current month → skip
+2. Finds all `GamificationState` rows where `monthlyPoints > 0`
+3. For each: creates a sealed `GamificationMonthlySnapshot` (points, XP, tier, class count)
+4. Zeroes `monthlyPoints` on all found states
+5. Creates a single `GamificationResetAudit` entry
+6. All in a Prisma `$transaction` for atomicity
+7. Gated by `STRIKELAB_ENABLED` only (no separate feature flag — reset is low-risk)
+8. Returns: `{ resetCount, snapshotCount, auditId, skipped }`
+
 ### Vercel cron config
 
 ```json
@@ -364,6 +378,10 @@ Filters accounts that are not real leads:
 {
   "path": "/api/cron/strikelab-poll-memberships",
   "schedule": "0 2 * * *"
+},
+{
+  "path": "/api/cron/strikelab-monthly-reset",
+  "schedule": "5 0 1 * *"
 }
 ```
 
@@ -436,6 +454,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 | `/api/strikelab/erasure` | POST | Trigger GDPR erasure (body: `{ customerId, track }`) |
 | `/api/cron/strikelab-poll-classes` | GET | Cron: class poller |
 | `/api/cron/strikelab-poll-memberships` | GET | Cron: membership sweep |
+| `/api/cron/strikelab-monthly-reset` | GET | Cron: monthly reset (seal + zero) |
 
 **Auth:**
 - Admin routes: session cookie with `admin` role
@@ -477,7 +496,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 
 ## Test Coverage
 
-288 tests total, 76 gamification-specific across 8 test files:
+396 tests total, 60 gamification-specific across 9 test files:
 
 | Test file | ~Tests | Covers |
 |-----------|--------|--------|
@@ -489,6 +508,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 | `tests/lib/gamification/event-log.test.ts` | ~8 | Append, idempotency, P2002 duplicate skip |
 | `tests/lib/gamification/poll/memberships.test.ts` | ~10 | Snapshot diff, renewal, dunning, cancellation |
 | `tests/lib/gamification/poll/classes.test.ts` | ~12 | Check-in, DOB capture, classify gate, opt-out skip |
+| `tests/lib/gamification/reset.test.ts` | 6 | Monthly reset: snapshots, zeroing, idempotency, audit |
 
 ### Phase 0 acceptance test path
 
@@ -556,7 +576,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 
 9. **`libSQL` adapter quirks.** Prisma with libSQL (Turso) doesn't support generated columns, raw SQL with `AT TIME ZONE`, or certain PostgreSQL-specific features. All app logic stays in TypeScript.
 
-10. **Monthly snapshots are sealed, not auto-generated.** The seal operation (freezing monthly state for prizes/history) is a Phase 1 feature. The schema is ready but no code seals yet.
+10. **Monthly snapshots are sealed by the monthly reset cron.** The cron runs on the 1st of each month at 00:05 UTC, finds all states with `monthlyPoints > 0`, creates sealed snapshots, and zeroes points. Idempotent — safe to re-trigger.
 
 ---
 
@@ -605,7 +625,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 
 ---
 
-## File Index — All 37 Phase 0 Files
+## File Index — All 40 Phase 0 Files
 
 ### Library (`src/lib/`)
 
@@ -617,6 +637,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 | `gamification/identity.ts` | Identity resolution — 4 axes + IG verify |
 | `gamification/consent.ts` | 4-toggle consent module with audit |
 | `gamification/erasure.ts` | Two-track Art. 17 GDPR erasure |
+| `gamification/reset.ts` | Monthly reset — seal snapshots, zero points, audit trail |
 | `gamification/poll/classes.ts` | 15-min Yogo class poller |
 | `gamification/poll/memberships.ts` | Daily membership sweep with diff detection |
 | `gamification/poll/shared.ts` | Shared polling utilities (Yogo fetch helpers) |
@@ -631,6 +652,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 |------|---------|
 | `cron/strikelab-poll-classes/route.ts` | 15-min class poller cron endpoint |
 | `cron/strikelab-poll-memberships/route.ts` | Daily membership sweep cron endpoint |
+| `cron/strikelab-monthly-reset/route.ts` | Monthly reset cron endpoint |
 | `strikelab/admin/route.ts` | Student list/search endpoint |
 | `strikelab/admin/[customerId]/route.ts` | Per-student detail endpoint |
 | `strikelab/admin/adjust-points/route.ts` | Manual points adjust endpoint |
@@ -666,6 +688,7 @@ All under `/dashboard/strikelab/`, admin role guard required.
 | `lib/gamification/event-log.test.ts` | Event log tests |
 | `lib/gamification/poll/memberships.test.ts` | Membership sweep tests |
 | `lib/gamification/poll/classes.test.ts` | Class poller tests |
+| `lib/gamification/reset.test.ts` | Monthly reset tests (idempotency, snapshots, audit) |
 
 ### Scripts
 

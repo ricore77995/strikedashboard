@@ -1,0 +1,282 @@
+{
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "x": -200,
+      "y": -600,
+      "width": 600,
+      "height": 80,
+      "text": "# StrikeLab v3.2-final — Fluxo de Pontuação\n\nDo aluno → ledger → side effects",
+      "color": "1"
+    },
+    {
+      "id": "aluno",
+      "type": "text",
+      "x": -1000,
+      "y": -300,
+      "width": 200,
+      "height": 100,
+      "text": "## 👤 Aluno\n\nFaz acção (check-in, story, renovação, etc.)",
+      "color": "4"
+    },
+    {
+      "id": "sources",
+      "type": "text",
+      "x": -700,
+      "y": -300,
+      "width": 220,
+      "height": 200,
+      "text": "## 📥 Event Sources\n\n- **yogo_poll** (15min /classes)\n- **memberships_poll** (daily 02:00)\n- **manychat_webhook** (Instagram)\n- **bot_command** (/postei, /strikelab)\n- **admin_ui** (Marcelo)\n- **cron_reset** (monthly)",
+      "color": "5"
+    },
+    {
+      "id": "identity",
+      "type": "text",
+      "x": -380,
+      "y": -300,
+      "width": 220,
+      "height": 150,
+      "text": "## 🔗 Identity lookup\n\nphone | email | wa_id | IG handle (verified)\n\n→ `gamification_identity` (Yogo customer_id = PK)",
+      "color": "6"
+    },
+    {
+      "id": "gate_identity",
+      "type": "text",
+      "x": -60,
+      "y": -400,
+      "width": 200,
+      "height": 100,
+      "text": "## 🚪 G1\n\nIdentity existe AND !erasedAt?",
+      "color": "3"
+    },
+    {
+      "id": "gate_consent",
+      "type": "text",
+      "x": -60,
+      "y": -270,
+      "width": 200,
+      "height": 100,
+      "text": "## 🚪 G2\n\nconsentTraining === true?",
+      "color": "3"
+    },
+    {
+      "id": "gate_pause",
+      "type": "text",
+      "x": -60,
+      "y": -140,
+      "width": 200,
+      "height": 100,
+      "text": "## 🚪 G3\n\nNenhum pause flag activo?",
+      "color": "3"
+    },
+    {
+      "id": "gate_classify",
+      "type": "text",
+      "x": -60,
+      "y": -10,
+      "width": 200,
+      "height": 120,
+      "text": "## 🚪 G4 (PATCH P14)\n\nclassify(membership) === 'active'?\n\n(Bloqueia dunning/paused)",
+      "color": "3"
+    },
+    {
+      "id": "gate_aggregator",
+      "type": "text",
+      "x": -60,
+      "y": 130,
+      "width": 200,
+      "height": 100,
+      "text": "## 🚪 G5\n\n!isNonActionableLead(customer)?",
+      "color": "3"
+    },
+    {
+      "id": "trigger_table",
+      "type": "text",
+      "x": 220,
+      "y": -400,
+      "width": 280,
+      "height": 700,
+      "text": "## 🎯 Triggers (eventType)\n\n**Treino:**\n- checkin_observed\n- perfect_week\n- full_plan_completion\n- p8/p12/livre_milestone\n- supera_teu_ritmo\n\n**Streaks:**\n- streak_5/10/15_activated\n- streak_shield_used\n\n**Renovação:**\n- subscription_renewed\n- comeback\n- dunning_detected\n- low_usage_checkin\n\n**Crescimento:**\n- referral_trial_only\n- referral_phase_1\n- referral_phase_2\n\n**UGC (opt-in):**\n- story_checkin / story_no_class\n- repost_official\n- feed_post / reel\n\n**Sistema:**\n- weekly_challenge_won\n- manual_adjustment\n- tier_change_proposed/confirmed",
+      "color": "5"
+    },
+    {
+      "id": "event_log",
+      "type": "text",
+      "x": 560,
+      "y": -100,
+      "width": 240,
+      "height": 200,
+      "text": "## 📝 Event Log\n\n`gamification_event_log`\n\n- INSERT com `idempotencyKey @unique`\n- P2002 → silent no-op\n- pointsDelta + xpDelta\n- pointsPeriod (Lisbon tz)\n- source + operatorId\n\n→ append-only, source of truth",
+      "color": "6"
+    },
+    {
+      "id": "boost_calc",
+      "type": "text",
+      "x": 560,
+      "y": -400,
+      "width": 240,
+      "height": 220,
+      "text": "## ⚡ Boost calculator\n\n**Scope (PATCH P4):** apenas `checkin_observed`\n\n**Stack formula:**\n`min(1.0 + Σ(b.mult - 1.0), 3.0)`\n\n**Active boosts (replay):**\n- weekend (1.8)\n- renovacao (1.5)\n- streak_5/10/15 (1.3/1.6/1.8)\n- ugc_story/post/reel (1.3/1.4/1.5)\n- supera_ritmo (1.2)\n- embaixador_referral (1.4)",
+      "color": "4"
+    },
+    {
+      "id": "materialize",
+      "type": "text",
+      "x": 880,
+      "y": -200,
+      "width": 220,
+      "height": 200,
+      "text": "## 🔄 State materialize\n\n`gamification_state`\n\n- Replay events em ordem\n- Single-writer per customer\n- Compute boosts at event timestamp (not now)\n- Update monthlyPoints + lifetimeXp\n- Update streak counter\n- Update lastClassAt",
+      "color": "6"
+    },
+    {
+      "id": "ledger_monthly",
+      "type": "text",
+      "x": 1160,
+      "y": -300,
+      "width": 200,
+      "height": 140,
+      "text": "## 💰 Monthly Points\n\n`state.monthlyPoints`\n\n- Com boosts\n- Zera dia 1\n- Para ranking + prémios",
+      "color": "2"
+    },
+    {
+      "id": "ledger_xp",
+      "type": "text",
+      "x": 1160,
+      "y": -120,
+      "width": 200,
+      "height": 140,
+      "text": "## 🏅 Lifetime XP\n\n`state.lifetimeXp`\n\n- SEM boosts (valor base)\n- Acumula sempre\n- Para patente vitalícia",
+      "color": "2"
+    },
+    {
+      "id": "tier_eval",
+      "type": "text",
+      "x": 1420,
+      "y": -300,
+      "width": 220,
+      "height": 200,
+      "text": "## 🎖️ Tier evaluation\n\nNightly cron sobre state.lifetimeXp\n\n→ `tier_change_proposed` event\n\n**Patentes:**\n- Iniciante 🥚 (0)\n- Bronze 🥉 (5k)\n- Prata 🥈 (15k)\n- Ouro 🥇 (40k)\n- Diamante 💎 (80k + rubric)",
+      "color": "5"
+    },
+    {
+      "id": "art22",
+      "type": "text",
+      "x": 1700,
+      "y": -300,
+      "width": 220,
+      "height": 200,
+      "text": "## ✅ Art. 22 gate\n\n**Admin confirmation queue**\n\nMarcelo tap → benefício económico activado:\n- Bronze: 5% bootcamps\n- Prata: 5% mensal + masterclass\n- Ouro: 10% + 1 PT/Q\n- Diamante: 15% + sessão privada\n\nSem confirmation: tier muda mas benefício fica pending",
+      "color": "3"
+    },
+    {
+      "id": "prizes",
+      "type": "text",
+      "x": 1420,
+      "y": -50,
+      "width": 220,
+      "height": 220,
+      "text": "## 🏆 Prémios mensais\n\nLeitura de state.monthlyPoints\n\n**Tiers (adaptive — PATCH P1):**\n- Bronze: 2,500 → bandana €8\n- Silver: 5,000 → t-shirt €25\n- Gold: 8,500 → casaco €40\n- Diamond: 12,000 → 25% off\n\n**Auto-tuning:** >6% MRR → +10%",
+      "color": "2"
+    },
+    {
+      "id": "champions",
+      "type": "text",
+      "x": 1700,
+      "y": -50,
+      "width": 220,
+      "height": 200,
+      "text": "## 🏅 Liga dos Campeões (PATCH P10)\n\nTop 3 mês N → badge para N+1\n\n**N+1:** compete em\n- Leaderboard regular (normal)\n- Leaderboard paralelo (badge holders)\n\nPrémio paralelo: voucher masterclass (~€10)\n\n**Nunca exclusão.**",
+      "color": "2"
+    },
+    {
+      "id": "snapshot",
+      "type": "text",
+      "x": 1160,
+      "y": 80,
+      "width": 200,
+      "height": 160,
+      "text": "## 📦 Monthly snapshot\n\nCron dia 1 02:00\n\n→ `gamification_monthly_snapshot`\n\n- Seal monthlyPoints, classesInPeriod, finalTier\n- Reset state.monthlyPoints = 0\n- Idempotent (reset_id locking)",
+      "color": "6"
+    },
+    {
+      "id": "ranking",
+      "type": "text",
+      "x": 1420,
+      "y": 200,
+      "width": 220,
+      "height": 180,
+      "text": "## 📊 Ranking público\n\n5 categorias:\n- 🏆 Mais Aulas\n- 📸 Maior Embaixador\n- 🤝 Mais Trazedor\n- 🔥 Maior Streak\n- 🥊 Cross-trainer (V2)\n\nDefault: pseudónimo (opt-in real-name)",
+      "color": "2"
+    },
+    {
+      "id": "admin_ui",
+      "type": "text",
+      "x": 220,
+      "y": 320,
+      "width": 280,
+      "height": 220,
+      "text": "## 🛠️ Admin UI (Marcelo)\n\n**Phase 0 (5 ecrãs):**\n- Per-student view\n- Manual adjust (+ reason)\n- Pause flags\n- Erasure handler\n- Reset audit log\n\n**Phase 1 (+ 8 ecrãs):**\n- Tier confirmation queue\n- Tier override\n- Prize POS + inventory\n- Discount apply tool\n- Diamante review\n- Late credit review\n- Comeback wall\n- Duplicate suspect queue\n- UGC manual approve",
+      "color": "5"
+    },
+    {
+      "id": "erasure",
+      "type": "text",
+      "x": 560,
+      "y": 320,
+      "width": 240,
+      "height": 200,
+      "text": "## 🗑️ Erasure (PATCH P5 — Art. 17)\n\n**Track A (default):**\n- Tombstone identity\n- Anonymize event log payloads\n- Zero state\n- 'pseudonimização' honesta\n\n**Track B (≥12 mo, operator):**\n- Hash customer_id\n- Delete identity row\n- Anonimização real",
+      "color": "1"
+    },
+    {
+      "id": "gdpr",
+      "type": "text",
+      "x": -380,
+      "y": 80,
+      "width": 220,
+      "height": 320,
+      "text": "## 🔒 GDPR by design\n\n**Lawful basis:**\n- Check-in: contract\n- UGC: explicit consent (P9)\n- Anti-fraude: leg. interest (LIA)\n- Tier econ. effect: + human confirm\n\n**Opt-in 4 toggles:**\n- training\n- ugc\n- realName\n- broadcasts\n\n**Minores:**\n- <13 excluídos\n- 13-17 parental written\n\n**Retention:** 24m hot, 60m cold",
+      "color": "1"
+    },
+    {
+      "id": "out_silent",
+      "type": "text",
+      "x": -60,
+      "y": 320,
+      "width": 200,
+      "height": 140,
+      "text": "## ⏸️ Gate falhou\n\nSkip silently\n\n(checkin pode emitir evento com pointsDelta=0 para audit)\n\nAluno NÃO é notificado de penalty/skip",
+      "color": "3"
+    }
+  ],
+  "edges": [
+    { "id": "e1", "fromNode": "aluno", "fromSide": "right", "toNode": "sources", "toSide": "left" },
+    { "id": "e2", "fromNode": "sources", "fromSide": "right", "toNode": "identity", "toSide": "left" },
+    { "id": "e3", "fromNode": "identity", "fromSide": "right", "toNode": "gate_identity", "toSide": "left" },
+    { "id": "e4", "fromNode": "gate_identity", "fromSide": "bottom", "toNode": "gate_consent", "toSide": "top", "label": "OK" },
+    { "id": "e5", "fromNode": "gate_consent", "fromSide": "bottom", "toNode": "gate_pause", "toSide": "top", "label": "OK" },
+    { "id": "e6", "fromNode": "gate_pause", "fromSide": "bottom", "toNode": "gate_classify", "toSide": "top", "label": "OK" },
+    { "id": "e7", "fromNode": "gate_classify", "fromSide": "bottom", "toNode": "gate_aggregator", "toSide": "top", "label": "OK" },
+    { "id": "e8", "fromNode": "gate_aggregator", "fromSide": "right", "toNode": "trigger_table", "toSide": "left", "label": "passa" },
+    { "id": "e9", "fromNode": "gate_classify", "fromSide": "bottom", "toNode": "out_silent", "toSide": "top", "label": "fail", "color": "1" },
+    { "id": "e10", "fromNode": "gate_consent", "fromSide": "bottom", "toNode": "out_silent", "toSide": "top", "label": "fail", "color": "1" },
+    { "id": "e11", "fromNode": "trigger_table", "fromSide": "right", "toNode": "boost_calc", "toSide": "left", "label": "se checkin" },
+    { "id": "e12", "fromNode": "trigger_table", "fromSide": "right", "toNode": "event_log", "toSide": "left", "label": "one-shots flat" },
+    { "id": "e13", "fromNode": "boost_calc", "fromSide": "bottom", "toNode": "event_log", "toSide": "top", "label": "multiplied" },
+    { "id": "e14", "fromNode": "event_log", "fromSide": "right", "toNode": "materialize", "toSide": "left" },
+    { "id": "e15", "fromNode": "materialize", "fromSide": "right", "toNode": "ledger_monthly", "toSide": "left", "label": "+pts (boosted)" },
+    { "id": "e16", "fromNode": "materialize", "fromSide": "right", "toNode": "ledger_xp", "toSide": "left", "label": "+xp (base)" },
+    { "id": "e17", "fromNode": "ledger_xp", "fromSide": "right", "toNode": "tier_eval", "toSide": "left" },
+    { "id": "e18", "fromNode": "tier_eval", "fromSide": "right", "toNode": "art22", "toSide": "left", "label": "proposed" },
+    { "id": "e19", "fromNode": "ledger_monthly", "fromSide": "right", "toNode": "prizes", "toSide": "left" },
+    { "id": "e20", "fromNode": "prizes", "fromSide": "right", "toNode": "champions", "toSide": "left" },
+    { "id": "e21", "fromNode": "ledger_monthly", "fromSide": "bottom", "toNode": "snapshot", "toSide": "top", "label": "dia 1" },
+    { "id": "e22", "fromNode": "prizes", "fromSide": "bottom", "toNode": "ranking", "toSide": "top" },
+    { "id": "e23", "fromNode": "admin_ui", "fromSide": "top", "toNode": "event_log", "toSide": "bottom", "label": "manual events" },
+    { "id": "e24", "fromNode": "admin_ui", "fromSide": "right", "toNode": "erasure", "toSide": "left" },
+    { "id": "e25", "fromNode": "erasure", "fromSide": "top", "toNode": "event_log", "toSide": "bottom", "label": "anonymize" },
+    { "id": "e26", "fromNode": "gdpr", "fromSide": "right", "toNode": "gate_consent", "toSide": "left" }
+  ]
+}

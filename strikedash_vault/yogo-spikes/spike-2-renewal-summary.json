@@ -1,0 +1,79 @@
+{
+  "total_rows": 149,
+  "sample_row_fields": [
+    "binding_end_date",
+    "campaign_text",
+    "discount_code_name",
+    "ended_because",
+    "id",
+    "membership_type_id",
+    "membership_type_name",
+    "membership_type_text",
+    "paid_until",
+    "payment_option",
+    "pending_no_show_fee_count",
+    "start_date",
+    "status",
+    "status_text",
+    "user_email",
+    "user_first_name",
+    "user_full_name",
+    "user_id",
+    "user_last_name",
+    "user_phone"
+  ],
+  "sample_active_with_next_payment": [
+    {
+      "user_id": 1174940,
+      "membership_type_name": "8 sessões/mês",
+      "status": "active",
+      "status_text": "Pausado. Renovação automática falhou 4 vezes.",
+      "start_date": "2026-03-26",
+      "paid_until": "2026-03-31",
+      "current_payment_period_start": null,
+      "next_payment": {
+        "date": "2026-04-01",
+        "amount": 40
+      },
+      "renewal_failed": null,
+      "renewal_failed_last_time_at": null,
+      "cancelled_from_date": null,
+      "payment_day_of_month": null
+    },
+    {
+      "user_id": 1174941,
+      "membership_type_name": "24 sessões/mês",
+      "status": "active",
+      "status_text": "Ativo.",
+      "start_date": "2026-03-26",
+      "paid_until": "2026-06-01",
+      "current_payment_period_start": null,
+      "next_payment": {
+        "date": "2026-06-02",
+        "amount": 60
+      },
+      "renewal_failed": null,
+      "renewal_failed_last_time_at": null,
+      "cancelled_from_date": null,
+      "payment_day_of_month": null
+    },
+    {
+      "user_id": 1174943,
+      "membership_type_name": "8 sessões/mês",
+      "status": "active",
+      "status_text": "Ativo.",
+      "start_date": "2026-03-26",
+      "paid_until": "2026-06-03",
+      "current_payment_period_start": null,
+      "next_payment": {
+        "date": "2026-06-04",
+        "amount": 40
+      },
+      "renewal_failed": null,
+      "renewal_failed_last_time_at": null,
+      "cancelled_from_date": null,
+      "payment_day_of_month": null
+    }
+  ],
+  "sample_dunning": []
+}

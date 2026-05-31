@@ -43,9 +43,10 @@ related:
 ## Code & Tests
 
 - [x] Branch `worktree-strikelab-phase0-core` mergeada para main
-- [x] 288/288 tests passing
+- [x] 396/396 tests passing (60 gamification-specific)
 - [x] TypeScript strict — zero errors
 - [x] `npm run build` passa sem erros
+- [x] Monthly reset implementado (reset.ts + cron route + 6 tests)
 - [ ] Smoke test em preview deployment
 
 ## GDPR & Legal

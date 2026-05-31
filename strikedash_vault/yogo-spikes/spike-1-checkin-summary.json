@@ -1,0 +1,116 @@
+{
+  "responseType": "classes",
+  "classes_count": 14,
+  "sample_signups_with_checkin": [
+    {
+      "class_id": 2421626,
+      "user_id": 1188416,
+      "signup_id": 13757553,
+      "checked_in_raw": 1779867205779,
+      "checked_in_iso": "2026-05-27T07:33:25Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779826379064,
+      "updatedAt": 1779867204406
+    },
+    {
+      "class_id": 2421626,
+      "user_id": 1195567,
+      "signup_id": 13759939,
+      "checked_in_raw": 1779867301403,
+      "checked_in_iso": "2026-05-27T07:35:01Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779858411205,
+      "updatedAt": 1779867300393
+    },
+    {
+      "class_id": 2421626,
+      "user_id": 1174960,
+      "signup_id": 13761244,
+      "checked_in_raw": 1779867310144,
+      "checked_in_iso": "2026-05-27T07:35:10Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779864218979,
+      "updatedAt": 1779867308750
+    },
+    {
+      "class_id": 2421626,
+      "user_id": 1188415,
+      "signup_id": 13761425,
+      "checked_in_raw": 1779867200641,
+      "checked_in_iso": "2026-05-27T07:33:20Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779864957460,
+      "updatedAt": 1779867199384
+    },
+    {
+      "class_id": 2532490,
+      "user_id": 1214212,
+      "signup_id": 13764103,
+      "checked_in_raw": 1779903027725,
+      "checked_in_iso": "2026-05-27T17:30:27Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779876293822,
+      "updatedAt": 1779903028146
+    },
+    {
+      "class_id": 2532490,
+      "user_id": 1174967,
+      "signup_id": 13768998,
+      "checked_in_raw": 1779903019372,
+      "checked_in_iso": "2026-05-27T17:30:19Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779897142393,
+      "updatedAt": 1779903019656
+    },
+    {
+      "class_id": 2532490,
+      "user_id": 1174961,
+      "signup_id": 13770346,
+      "checked_in_raw": 1779902891848,
+      "checked_in_iso": "2026-05-27T17:28:11Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779902534954,
+      "updatedAt": 1779902892117
+    },
+    {
+      "class_id": 2532490,
+      "user_id": 1186930,
+      "signup_id": 13770462,
+      "checked_in_raw": 1779903013528,
+      "checked_in_iso": "2026-05-27T17:30:13Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779902896555,
+      "updatedAt": 1779903014133
+    },
+    {
+      "class_id": 2421888,
+      "user_id": 1235176,
+      "signup_id": 13756534,
+      "checked_in_raw": 1779906179649,
+      "checked_in_iso": "2026-05-27T18:22:59Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779823331126,
+      "updatedAt": 1779906179922
+    },
+    {
+      "class_id": 2421888,
+      "user_id": 1174989,
+      "signup_id": 13759250,
+      "checked_in_raw": 1779906158255,
+      "checked_in_iso": "2026-05-27T18:22:38Z",
+      "cancelled_at": 0,
+      "late_cancel": 0,
+      "createdAt": 1779844245537,
+      "updatedAt": 1779906158635
+    }
+  ]
+}

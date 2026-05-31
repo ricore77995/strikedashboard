@@ -1,0 +1,192 @@
+{
+  "system": "StrikeLab",
+  "version": "3.0",
+  "lastUpdated": "2026-05-27",
+  "owner": "Strike House Portugal",
+  "_description": "Sistema de gamificação dual-ledger (Pontos do Mês + XP Lifetime) com patentes vitalícias, calibrado economicamente para CAC/LTV reais.",
+
+  "ledgers": {
+    "monthlyPoints": {
+      "purpose": "Competição, ranking mensal, resgate de prémios físicos",
+      "behavior": "Zera no dia 1 de cada mês",
+      "consumable": true
+    },
+    "lifetimeXP": {
+      "purpose": "Determina patente permanente do aluno",
+      "behavior": "Acumula para sempre, nunca decresce",
+      "consumable": false,
+      "note": "Toda ação que credita Pontos do Mês credita simultaneamente XP (mesmo valor base, sem aplicação de boosts)"
+    }
+  },
+
+  "plans": {
+    "plano_8": {
+      "label": "8 aulas",
+      "price_eur": 50,
+      "pointsPerClass": 60,
+      "fullPlanBonus": 800,
+      "perfectWeek": { "threshold_classesPerWeek": 2, "bonus": 350 }
+    },
+    "plano_12": {
+      "label": "12 aulas",
+      "price_eur": 60,
+      "pointsPerClass": 45,
+      "fullPlanBonus": 700,
+      "perfectWeek": { "threshold_classesPerWeek": 3, "bonus": 280 }
+    },
+    "plano_livre": {
+      "label": "Livre",
+      "price_eur": 75,
+      "pointsPerClass": 35,
+      "fullPlanBonus": null,
+      "_note": "Plano Livre não tem 'teto' de plano. Usa milestones progressivos.",
+      "perfectWeek": { "threshold_classesPerWeek": 4, "bonus": 220 },
+      "milestones": [
+        { "classesInMonth": 8,  "bonus": 200, "extra": null },
+        { "classesInMonth": 12, "bonus": 300, "extra": "activate_boost_atleta" },
+        { "classesInMonth": 16, "bonus": 400, "extra": null },
+        { "classesInMonth": 20, "bonus": 500, "extra": "badge_atleta_do_mes" }
+      ]
+    }
+  },
+
+  "triggers": {
+    "_description": "Triggers permanentes — sempre ativos, qualquer altura do mês",
+    "renewal": [
+      { "id": "renewal_processed", "label": "Renovação automática", "condition": "subscription_renewed", "points": 400, "activatesBoost": "renovacao", "message": "Subscrição renovada! +400 pts + Boost Renovação ativado (14 dias)" },
+      { "id": "low_usage_alert", "label": "Uso muito baixo", "condition": "dayOfMonth >= 20 AND classesThisMonth <= 3", "points": 0, "action": "trigger_manychat_check_in", "message": "[Nome], está tudo bem? Notamos que não tens vindo muito este mês" }
+    ],
+    "streak": [
+      { "id": "streak_5",  "label": "5 dias seguidos",  "condition": "consecutiveDays == 5",  "activatesBoost": "streak_5",  "message": "5 dias seguidos! Boost x1.3 ativado" },
+      { "id": "streak_10", "label": "10 dias seguidos", "condition": "consecutiveDays == 10", "activatesBoost": "streak_10", "message": "10 dias seguidos! Boost x2.0 ativado" },
+      { "id": "streak_15", "label": "15 dias seguidos", "condition": "consecutiveDays == 15", "activatesBoost": "streak_15", "message": "15 dias seguidos! Boost máximo x2.5" },
+      { "id": "streak_shield", "label": "Streak Shield", "condition": "1_missed_day AND shield_available_this_month", "action": "preserve_streak", "frequency": "1x per month, auto-applied", "message": "Streak Shield ativado — a sua sequência foi preservada" },
+      { "id": "multi_class_same_day", "label": "Mais de 1 aula no mesmo dia", "condition": "classesToday >= 2", "points": "variable", "message": "Fizeste {classesToday} aulas hoje!" }
+    ],
+    "activity": [
+      { "id": "supera_teu_ritmo", "label": "Supera o Teu Ritmo", "condition": "classesThisWeek > plan.perfectWeek.threshold_classesPerWeek", "points": 400, "activatesBoost": "supera_ritmo", "_note": "Threshold é relativo ao plano: P8=3+/sem, P12=4+/sem, Livre=5+/sem", "message": "Bateste o teu ritmo! +400 pts + Boost x1.3 (semana)" },
+      { "id": "full_plan_completion", "label": "Completou 100% do plano", "condition": "classesUsed == plan.totalClasses (P8/P12 only)", "points": "see plans[plan].fullPlanBonus", "message": "Parabéns! Usaste 100% do teu plano" },
+      { "id": "cross_training", "label": "Cross-training (Muay Thai + Boxing)", "condition": "uniqueModalitiesThisWeek >= 2", "points": 200, "frequency": "1x per week max", "message": "Cross-training detetado! +200 pts" },
+      { "id": "dupla", "label": "Dupla — 2 alunos mesma aula", "condition": "2_students_checkin_same_class AND both_report_via_bot", "points": 100, "appliesTo": "both_students", "frequency": "1x per week max per pair", "message": "Dupla confirmada! +100 pts para cada" }
+    ],
+    "growth": [
+      { "id": "referral_converted", "label": "Convite com inscrição (referral)", "condition": "referred_user_signs_up", "points_phased": { "phase_1_signup": 1000, "phase_2_first_renewal": 1500 }, "total": 2500, "activatesBoost": "embaixador", "antiAbuseRequirements": { "minCheckinsByReferred": 4, "minRenewalsByReferred": 1 }, "message": "Amigo inscrito! +1000 pts agora, +1500 quando ele renovar + Boost Embaixador (14d)" },
+      { "id": "referral_trial_only", "label": "Convite com aula trial (não convertido)", "condition": "referred_user_does_trial AND !signs_up", "points": 400, "message": "Obrigado por trazeres o teu amigo ao trial! +400 pts" }
+    ],
+    "social_ugc": [
+      { "id": "story_checkin", "label": "Story com @ feito até 24h após check-in", "detection": "manychat_story_mention AND checkin_in_last_24h", "points": 80, "activatesBoost": "ugc_story", "cap": "1 per day", "countsTowardsEmbaixadorRatio": true, "message": "Obrigado pelo story! +80 pts" },
+      { "id": "story_organic", "label": "Story orgânico (sem check-in associado)", "detection": "manychat_story_mention AND NO_checkin_today", "points": 250, "activatesBoost": "ugc_story", "cap": "1 per week", "countsTowardsEmbaixadorRatio": true, "_example": "Camisa da Strike House na praia, com tag", "message": "Story orgânico! Estás a representar a casa lá fora — +250 pts" },
+      { "id": "repost_official", "label": "Repost de post oficial @strikershouseportugal", "detection": "manychat_repost_detected", "points": 200, "cap": "2 per week", "message": "Obrigado pelo repost! +200 pts" },
+      { "id": "feed_post", "label": "Post no feed com @ tag", "detection": "manychat_post_mention (image)", "points": 350, "activatesBoost": "ugc_post", "cap": "1 per week", "message": "Post no feed! +350 pts + Boost x1.8 (48h)" },
+      { "id": "reel", "label": "Reel com @ tag", "detection": "manychat_post_mention (video)", "points": 600, "activatesBoost": "ugc_reel", "cap": "2 per month", "message": "Reel publicado! +600 pts + Boost x2.0 (72h)" },
+      { "id": "music_choice", "label": "Escolheu música da aula", "detection": "spotify_api_integration", "points": "variable", "message": "Obrigado por escolheres a música!" },
+      { "id": "store_purchase", "label": "Compra na loja", "detection": "store_api", "points": "variable (proportional to purchase)", "message": "Obrigado pela compra!" }
+    ],
+    "penalties": [
+      { "id": "inactivity_long", "label": "14+ dias sem treino", "condition": "daysSinceLastClass >= 14", "points": -50, "message": "Perdeste 50 pontos por inatividade. Volta para o tatame!" },
+      { "id": "broken_streak", "label": "Quebrou sequência (após shield gasto)", "condition": "broke_streak AND streak_was >= 5 AND shield_already_used_this_month", "points": -30, "message": "Quebraste a sequência de {previousStreak} dias" }
+    ]
+  },
+
+  "boosts": {
+    "_description": "Multiplicadores aplicados a pontos. Regra de stacking: soma deltas (boost - 1.0) e aplica teto x3.0",
+    "stackingFormula": "finalMultiplier = min(1.0 + sum(boost_i - 1.0 for active boosts), 3.0)",
+    "globalCap": 3.0,
+    "definitions": [
+      { "id": "weekend", "label": "Fim de Semana", "multiplier": 1.8, "trigger": "day == Saturday OR day == Sunday", "duration": "48h cyclical (always active on weekends)" },
+      { "id": "renovacao", "label": "Renovação", "multiplier": 1.6, "trigger": "subscription_renewed", "duration_days": 14 },
+      { "id": "streak_5", "label": "Streak 5 dias", "multiplier": 1.3, "trigger": "consecutiveDays >= 5", "duration": "until streak breaks" },
+      { "id": "streak_10", "label": "Streak 10 dias", "multiplier": 2.0, "trigger": "consecutiveDays == 10", "duration_days": 14, "decayTo": { "multiplier": 1.5, "behavior": "until streak breaks" } },
+      { "id": "streak_15", "label": "Streak 15 dias", "multiplier": 2.5, "trigger": "consecutiveDays == 15", "duration_days": 7, "decayTo": { "multiplier": 1.8, "behavior": "until streak breaks" } },
+      { "id": "atleta", "label": "Atleta (Livre)", "multiplier": 1.4, "trigger": "plan == 'livre' AND classesThisMonth >= 12", "duration": "until end of current month", "resetOn": "day 1 of next month" },
+      { "id": "embaixador_referral", "label": "Embaixador (Referral)", "multiplier": 1.5, "trigger": "referral_converted", "duration_days": 14 },
+      { "id": "embaixador_ratio", "label": "Embaixador (Ratio UGC)", "multiplier": 1.5, "trigger": "stories_count_this_month > checkins_count_this_month", "duration": "until end of current month", "_note": "Calculado em tempo real; ativa assim que ratio é ultrapassado" },
+      { "id": "ugc_story", "label": "Boost UGC — Story", "multiplier": 1.5, "duration_hours": 24 },
+      { "id": "ugc_post", "label": "Boost UGC — Post Feed", "multiplier": 1.8, "duration_hours": 48 },
+      { "id": "ugc_reel", "label": "Boost UGC — Reel", "multiplier": 2.0, "duration_hours": 72 },
+      { "id": "supera_ritmo", "label": "Supera o Teu Ritmo", "multiplier": 1.3, "duration": "until end of current week" },
+      { "id": "mini_random", "label": "Mini Boost Aleatório", "type": "flat_bonus", "range_pts": [60, 140], "frequency": "2-4x per week, randomly assigned", "duration": "single class" }
+    ]
+  },
+
+  "weeklyChallenges": {
+    "_description": "Desafios mistério lançados pelo bot 2x/semana. Janela 24-48h. Anunciados publicamente no grupo WhatsApp.",
+    "cadence": { "tuesday": "frequency/timing type", "friday": "social/creative type" },
+    "rotationRule": "No repeat within last 4 weeks",
+    "publicAnnouncement": true,
+    "winnerBroadcast": true,
+    "pool": [
+      { "id": "flash_checkin", "label": "Flash Check-in", "mechanic": "First 5 to check-in within next 24h", "points": 300, "window_hours": 24 },
+      { "id": "senha_secreta", "label": "Senha Secreta", "mechanic": "Secret password told during class then report via bot", "points": 200, "window": "single class" },
+      { "id": "story_theme", "label": "Story Theme", "mechanic": "Story with theme of the day", "points": 300, "window_hours": 24 },
+      { "id": "aula_lotada", "label": "Aula Lotada", "mechanic": "Whoever fills the last seat of class X", "points": 250, "window": "until class X starts" },
+      { "id": "combo_surpresa", "label": "Combo Surpresa", "mechanic": "Combination announced live", "points": 350, "window_hours": 24 },
+      { "id": "trio_surpresa", "label": "Trio Surpresa", "mechanic": "3 random students drawn", "points": 400, "window_hours": 48 },
+      { "id": "hora_h", "label": "Hora H", "mechanic": "Specific class wins if you show", "points": 250, "window": "single class" }
+    ]
+  },
+
+  "tiers": {
+    "_description": "Patentes vitalícias. Status nunca é revogado (exceto violação grave). Benefícios condicionais à subscrição ativa.",
+    "manualValidationRequired": ["diamante"],
+    "revocationPolicy": "Manual only, by Ricardo + Marcelo, in case of code-of-conduct violation",
+    "levels": [
+      { "id": "iniciante", "label": "Iniciante", "requirements": { "monthsAsClient": [0, 3], "minXP": 0 }, "permanentStatus": { "badge": "Novo no Tatame" }, "activeBenefits": { "onboardingKit": true } },
+      { "id": "bronze", "label": "Bronze", "requirements": { "monthsAsClient": 3, "minXP": 8000 }, "permanentStatus": { "badge": "Bronze permanente" }, "activeBenefits": { "bootcampWorkshopDiscount_pct": 5 } },
+      { "id": "prata", "label": "Prata", "requirements": { "monthsAsClient": 6, "minXP": 25000 }, "permanentStatus": { "badge": "Prata permanente", "oneTimeGift": "Welcome-to-Silver brinde" }, "activeBenefits": { "monthlyDiscount_pct": 5, "masterclassPriority": true } },
+      { "id": "ouro", "label": "Ouro", "requirements": { "monthsAsClient": 12, "minXP": 60000 }, "permanentStatus": { "badge": "Ouro permanente", "oneTimeGift": "Welcome-to-Gold brinde" }, "activeBenefits": { "monthlyDiscount_pct": 10, "personalTrainerSessionsPerQuarter": 1, "masterclassReservedSeat": true } },
+      { "id": "diamante", "label": "Diamante", "requirements": { "monthsAsClient": 24, "minXP": 150000, "manualValidation": true }, "permanentStatus": { "badge": "Diamante permanente", "wallPhoto": "Permanent photo on academy wall", "decisionVote": true }, "activeBenefits": { "monthlyDiscount_pct": 15, "freeMonthsPerYear": 1, "privateSessionPerMonth": 1 } }
+    ]
+  },
+
+  "monthlyPrizes": {
+    "_description": "Prémios mensais resgatados com Pontos do Mês. XP NAO e consumido. Top 3 entra na Liga dos Campeões.",
+    "leagueOfChampionsRule": "Top 3 of category in month N -> out of main ranking in month N+1, badge permanent",
+    "categories": [
+      { "id": "most_classes", "label": "Mais Aulas" },
+      { "id": "biggest_embaixador", "label": "Maior Embaixador (UGC)" },
+      { "id": "biggest_referrer", "label": "Mais Trazedor (referrals)" },
+      { "id": "most_cross_trainer", "label": "Mais Cross-trainer" },
+      { "id": "biggest_streak", "label": "Maior Streak" }
+    ],
+    "tiers": [
+      { "id": "monthly_bronze",  "minPointsRequired": 3000,  "prize": "Bandana / pulseira",     "approxCost_eur": 8 },
+      { "id": "monthly_silver",  "minPointsRequired": 6000,  "prize": "T-shirt Strike House",   "approxCost_eur": 25 },
+      { "id": "monthly_gold",    "minPointsRequired": 10000, "prize": "Casaco Strike House",    "approxCost_eur": 40 },
+      { "id": "monthly_diamond", "minPointsRequired": 15000, "prize": "1 mes gratis",           "approxCost_eur": 10 }
+    ]
+  },
+
+  "antiAbuse": {
+    "referralPhasing": {
+      "rule": "Pagamento de pontos faseado",
+      "phase_1_pts": 1000, "phase_1_trigger": "Convidado completa inscrição",
+      "phase_2_pts": 1500, "phase_2_trigger": "Convidado completa 4 check-ins reais E 1ª renovação"
+    },
+    "diamondValidation": "Manual final approval by Ricardo + Marcelo",
+    "storyAuthenticity": "Trust-first model; manual curation only triggered if abuse pattern detected",
+    "storyCheckInDetection": "Bot queries Yogo for check-in in last 24h to differentiate story_checkin vs story_organic",
+    "tierRevocation": "Only in case of severe code-of-conduct violation; never algorithmic",
+    "duplicateAccountDetection": "Monitor name + phone + email + payment_method overlap"
+  },
+
+  "integrations": {
+    "yogo": { "purpose": "Source of truth for check-ins, subscriptions, class data, plan info", "connection": "WhatsApp bot pulls data on demand" },
+    "manychat": { "plan": "Pro", "purpose": "Detects @ mentions (story, post, reel), triggers events", "events": ["story_mention", "post_mention_image", "post_mention_video", "repost"] },
+    "whatsappBot": { "purpose": "Orchestrator", "channels": ["academy_group", "1to1_with_student"], "challengeBroadcast": "2x per week in academy group" },
+    "spotify": { "purpose": "Music choice trigger (optional)", "status": "to_be_implemented" },
+    "store": { "purpose": "Purchase trigger (optional)", "status": "to_be_implemented" }
+  },
+
+  "operationalNotes": {
+    "monthlyReset": "Day 1 at 00:00 Europe/Lisbon -> Pontos do Mes = 0; XP preserved; boosts mensais reset",
+    "tierEvaluation": "Continuous — tier re-evaluated on every XP credit",
+    "ledgerSeparation": "Every action credits BOTH ledgers: points (with boost applied) AND XP (base value, no boost)",
+    "boostStackingExample": {
+      "scenario": "Aluno Livre, sabado, streak 10d, com Boost Atleta, semana pos-renovacao",
+      "boosts": ["weekend (1.8)", "streak_10 (2.0)", "atleta (1.4)", "renovacao (1.6)"],
+      "deltaSum": "0.8 + 1.0 + 0.4 + 0.6 = 2.8",
+      "finalMultiplier": "min(1.0 + 2.8, 3.0) = 3.0 (capped)"
+    }
+  }
+}
