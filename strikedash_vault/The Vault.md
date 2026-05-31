@@ -18,7 +18,8 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Cobertura]] — **Coverage matrix** — 141 items mapeados spec ↔ docs ↔ tasks (45% Phase 0)
 - [[StrikeLab-Fluxo.canvas|StrikeLab-Fluxo (canvas)]] — Fluxo visual aluno → gates → triggers → ledgers → side effects
 - [[Yogo-StrikeLab-Gap-Report]] — Mapeamento API completo — tabela OK/gaps validada com dados reais
-- [[StrikeLab-Phase-0-Handoff]] — **Phase 0 complete handoff** — architecture, data model, events, identity, consent, cron, admin UI, GDPR, tests, gotchas, Phase 1 plan, 37-file index
+- [[StrikeLab-Phase-0-Handoff]] — **Phase 0 complete handoff** — architecture, data model, events, identity, consent, cron, admin UI, GDPR, tests, gotchas, Phase 1 plan, 40-file index
+- [[StrikeLab-Phase-0-Production-Deploy]] — **Phase 0 production deploy** — code live, flags OFF, DOB audit results, go-live checklist
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
