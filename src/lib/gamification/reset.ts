@@ -97,6 +97,16 @@ export async function performMonthlyReset(): Promise<MonthlyResetResult> {
       data: { monthlyPoints: 0 },
     });
 
+    // Phase 1: Renew streak shields for all identities with a state
+    if (process.env.STRIKELAB_REAL_POINTS_ENABLED === "true") {
+      await tx.gamificationState.updateMany({
+        data: {
+          streakShieldAvailable: true,
+          shieldResetForMonth: period,
+        },
+      });
+    }
+
     // 3. Create audit entry
     return tx.gamificationResetAudit.create({
       data: {
