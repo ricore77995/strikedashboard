@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTierProgress } from "@/lib/gamification/tier";
+
+/** Safely parse a stored event payload, extracting only the fields the UI shows. */
+function parsePayload(raw: string | null): { className: string | null; boostsApplied: string[] } {
+  if (!raw) return { className: null, boostsApplied: [] };
+  try {
+    const p = JSON.parse(raw) as Record<string, unknown>;
+    const className = typeof p.className === "string" ? p.className : null;
+    const boostsApplied = Array.isArray(p.boostsApplied)
+      ? p.boostsApplied.filter((b): b is string => typeof b === "string")
+      : [];
+    return { className, boostsApplied };
+  } catch {
+    return { className: null, boostsApplied: [] };
+  }
+}
 
 /**
  * GET /api/strikelab/admin/[customerId]
@@ -60,19 +76,27 @@ export async function GET(
           monthlyPoints: state.monthlyPoints,
           lifetimeXp: state.lifetimeXp,
           currentTier: state.currentTier,
+          proposedTier: state.proposedTier,
           currentStreakDays: state.currentStreakDays,
+          streakShieldAvailable: state.streakShieldAvailable,
           lastClassAt: state.lastClassAt,
+          tierProgress: getTierProgress(state.lifetimeXp),
         }
       : null,
-    events: events.map((e) => ({
-      id: e.id,
-      eventId: e.eventId,
-      eventType: e.eventType,
-      pointsDelta: e.pointsDelta,
-      xpDelta: e.xpDelta,
-      source: e.source,
-      pointsPeriod: e.pointsPeriod,
-      createdAt: e.createdAt,
-    })),
+    events: events.map((e) => {
+      const { className, boostsApplied } = parsePayload(e.payloadJson);
+      return {
+        id: e.id,
+        eventId: e.eventId,
+        eventType: e.eventType,
+        pointsDelta: e.pointsDelta,
+        xpDelta: e.xpDelta,
+        source: e.source,
+        pointsPeriod: e.pointsPeriod,
+        createdAt: e.createdAt,
+        className,
+        boostsApplied,
+      };
+    }),
   });
 }

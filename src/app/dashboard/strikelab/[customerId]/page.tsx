@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { tierLabel } from "@/lib/gamification/labels";
+import { Stat, Row, Consent, TierProgress, EventRow } from "./parts";
 
 interface StudentData {
   identity: {
@@ -28,8 +30,16 @@ interface StudentData {
     monthlyPoints: number;
     lifetimeXp: number;
     currentTier: string;
+    proposedTier: string | null;
     currentStreakDays: number;
+    streakShieldAvailable: boolean;
     lastClassAt: string | null;
+    tierProgress: {
+      current: string;
+      next: string | null;
+      xpToNext: number;
+      progress: number;
+    };
   } | null;
   events: Array<{
     id: string;
@@ -40,6 +50,8 @@ interface StudentData {
     source: string;
     pointsPeriod: string | null;
     createdAt: string;
+    className: string | null;
+    boostsApplied: string[];
   }>;
 }
 
@@ -62,7 +74,6 @@ export default function StudentDetailPage() {
   const { identity, state, events } = data;
 
   const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("pt-PT") : "—";
-  const fmtDt = (d: string | null) => d ? new Date(d).toLocaleString("pt-PT") : "—";
 
   return (
     <div>
@@ -80,9 +91,26 @@ export default function StudentDetailPage() {
           <div className="grid grid-cols-2 gap-3">
             <Stat label="Pontos (mês)" value={String(state.monthlyPoints)} color="text-emerald-400" />
             <Stat label="XP (total)" value={String(state.lifetimeXp)} color="text-blue-400" />
-            <Stat label="Nível" value={state.currentTier} color="text-amber-400" />
-            <Stat label="Streak" value={`${state.currentStreakDays}d`} color="text-cyan-400" />
+            <Stat
+              label="Nível"
+              value={`${tierLabel(state.currentTier).emoji} ${tierLabel(state.currentTier).name}`}
+              color="text-amber-400"
+            />
+            <Stat
+              label="Streak"
+              value={`${state.currentStreakDays}d${state.streakShieldAvailable ? " 🛡️" : ""}`}
+              color="text-cyan-400"
+            />
           </div>
+
+          {/* Tier progress */}
+          <TierProgress tp={state.tierProgress} />
+
+          {state.proposedTier && state.proposedTier !== state.currentTier && (
+            <p className="text-xs text-amber-400/80 mt-2">
+              Nível proposto: {tierLabel(state.proposedTier).emoji} {tierLabel(state.proposedTier).name}
+            </p>
+          )}
         </div>
       )}
 
@@ -127,20 +155,7 @@ export default function StudentDetailPage() {
         <h2 className="text-sm font-medium text-zinc-400 mb-2">Últimos eventos ({events.length})</h2>
         <div className="space-y-1">
           {events.map((e) => (
-            <div key={e.id} className="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2 flex items-center justify-between">
-              <div>
-                <span className="text-xs text-white font-mono">{e.eventType}</span>
-                <span className="text-xs text-zinc-600 ml-2">{e.source}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {e.pointsDelta !== 0 && (
-                  <span className={e.pointsDelta > 0 ? "text-emerald-400 text-xs" : "text-red-400 text-xs"}>
-                    {e.pointsDelta > 0 ? "+" : ""}{e.pointsDelta}
-                  </span>
-                )}
-                <span className="text-xs text-zinc-600">{fmtDt(e.createdAt)}</span>
-              </div>
-            </div>
+            <EventRow key={e.id} e={e} />
           ))}
         </div>
       </div>
@@ -163,31 +178,5 @@ export default function StudentDetailPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div>
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className={`text-lg font-bold ${color}`}>{value}</p>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-white">{value}</span>
-    </div>
-  );
-}
-
-function Consent({ label, on }: { label: string; on: boolean }) {
-  return (
-    <span className={on ? "text-emerald-400" : "text-zinc-600"}>
-      {on ? "✓" : "✗"} {label}
-    </span>
   );
 }

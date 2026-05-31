@@ -22,6 +22,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Phase-0-Production-Deploy]] — **Phase 0 production deploy** — code live, flags OFF, DOB audit results, go-live checklist
 - [[StrikeLab-Phase-0-TODOs]] — **Open TODOs** — Marcelo DOBs, Vercel Pro, lawyer, go-live flags
 - [[StrikeLab-Phase-1-Engine-Handoff]] — **Phase 1 engine handoff** — points, boosts, tiers, streaks, milestones, retro replay, 110 gamification tests
+- [[StrikeLab-Sprint-8-Student-UI]] — **Sprint 8 student UI** — enhanced admin detail page (done), student magic-link auth decision, self-service API/page (next)
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
