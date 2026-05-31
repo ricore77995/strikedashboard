@@ -4,6 +4,7 @@ import { findByCustomerId } from "@/lib/gamification/identity";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { isNonActionableLead } from "@/lib/yogo/non-actionable-lead";
 import { getTodayISO, getCurrentPeriod } from "./shared";
+import { RENEWAL_BONUS } from "@/lib/gamification/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -182,11 +183,21 @@ export async function pollMemberships(): Promise<MembershipPollResult> {
     }
 
     for (const ev of diffEvents) {
+      // Phase 1: real points on renewal
+      const realPointsEnabled = process.env.STRIKELAB_REAL_POINTS_ENABLED === "true";
+      let pointsDelta = 0;
+      let xpDelta = 0;
+
+      if (realPointsEnabled && ev.eventType === "subscription_renewed") {
+        pointsDelta = RENEWAL_BONUS;
+        xpDelta = RENEWAL_BONUS;
+      }
+
       const appended = await appendEvent({
         customerId: row.user_id,
         eventType: ev.eventType,
-        pointsDelta: 0, // Phase 0
-        xpDelta: ev.eventType === "subscription_renewed" ? 0 : 0,
+        pointsDelta,
+        xpDelta,
         payloadJson: ev.payload ?? null,
         source: "cron",
         idempotencyKey: `${ev.eventType}:${row.user_id}:${today}`,
