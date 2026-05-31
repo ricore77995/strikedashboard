@@ -24,7 +24,8 @@ page), then to students (self-service). One verified slice at a time.
 |---|-------|--------|
 | 1 | Enhanced admin student detail page | ✅ Done (merged to `main`) |
 | 2 | Student self-service API (`/api/strikelab/me`) | ✅ Done |
-| 3 | Student-facing dashboard page | ⏳ Next — consumes `/api/strikelab/me` |
+| 3 | Student-facing dashboard page (`/strikelab/me`) | ✅ Done |
+| 4 | Wire the magic link into the WhatsApp bot (mint + send) | ⏳ Next |
 
 ## Decision — Student authentication = WhatsApp magic-link token
 
@@ -93,6 +94,31 @@ gamification tests pass (8 new) · all endpoint paths verified live against seed
 Set **`STRIKELAB_LINK_SECRET`** in Vercel (all envs) before slice 3 ships —
 `openssl rand -base64 32`. Until set, `/api/strikelab/me` returns **503** (fail-closed),
 so deploying without it is safe but the student page won't work.
+
+## Slice 3 — Student-facing page (done)
+
+**Goal:** student opens the WhatsApp magic link → sees a motivational pt-PT
+progress view. No login.
+
+**New files (route `/strikelab/me`, in the `(public)` group — outside the proxy
+auth guard, which only matches `/dashboard/:path*` + `/login`):**
+- `src/app/(public)/strikelab/me/page.tsx` — server component, wraps the client in
+  `<Suspense>` (required for `useSearchParams` in Next 15).
+- `src/app/(public)/strikelab/me/me-client.tsx` — reads `?t=`, fetches
+  `/api/strikelab/me`, renders tier hero + progress bar, 3 stat cards (pontos do mês,
+  XP total, streak + shield), and a recent-activity feed with friendly labels + boost
+  chips. Reuses `labels.ts`. Each HTTP status → a friendly pt-PT message; empty-events
+  encouragement state.
+
+**Verification:** `tsc` clean · build compiles (`/strikelab/me` present as a public
+route) · 118 tests pass · live: page serves **HTTP 200 with 0 redirects** (confirms it
+is NOT behind the auth guard) both with and without a token · endpoint returns correct
+rich data (bronze, 6200 XP, tierProgress 8800→prata, streak+shield, Muay Thai +143 with
+weekend+streak_5 boosts) against a seeded local DB, then DB restored exactly.
+
+**Not visually screenshot-verified** (no Playwright installed; judged disproportionate
+to install for one page). Layout is standard Tailwind over a verified data contract —
+recommend eyeballing on a phone with a real link once `STRIKELAB_LINK_SECRET` is set.
 
 ## Gotchas found
 
