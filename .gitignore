@@ -29,3 +29,4 @@ next-env.d.ts
 
 # Pre-apply schema dumps (may contain schema details; never commit)
 backups/
+.env*.local

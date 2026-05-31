@@ -1,11 +1,11 @@
 /**
  * Shared types for the StrikeLab gamification engine.
- * Frozen in Phase 0 — extend in Phase 1 when boosts/tiers go live.
+ * Extended in Phase 1 for real points, boosts, tiers, and milestones.
  */
 
 // ─── Event types ─────────────────────────────────────────────────────
 
-/** All known event types. Phase 0 only emits checkin_observed and membership events. */
+/** All known event types across Phase 0 and Phase 1. */
 export type EventType =
   | "checkin_observed"
   | "subscription_renewed"
@@ -16,14 +16,24 @@ export type EventType =
   | "monthly_reset"
   | "erasure_executed"
   | "identity_created"
-  | "ig_verified";
+  | "ig_verified"
+  // Phase 1 event types
+  | "streak_5_activated"
+  | "streak_10_activated"
+  | "streak_15_activated"
+  | "streak_shield_used"
+  | "comeback"
+  | "supera_teu_ritmo"
+  | "perfect_week"
+  | "milestone_achieved"
+  | "retroactive_replay";
 
 /** Source of the event — who/what triggered it. */
-export type EventSource = "system" | "bot" | "admin" | "cron";
+export type EventSource = "system" | "bot" | "admin" | "cron" | "retroactive_replay";
 
 // ─── State ───────────────────────────────────────────────────────────
 
-export type Tier = "bronze" | "silver" | "gold" | "platinum" | "diamond";
+export type Tier = "iniciante" | "bronze" | "prata" | "ouro" | "diamante";
 
 /** Shape returned by materializeState(). */
 export interface GamificationStateView {

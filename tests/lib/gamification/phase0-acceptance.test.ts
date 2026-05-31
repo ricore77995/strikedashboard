@@ -126,7 +126,7 @@ describe("Phase 0 acceptance — full happy path with classify gate", () => {
     expect(state).not.toBeNull();
     expect(state!.monthlyPoints).toBe(0); // Phase 0: no points yet
     expect(state!.lifetimeXp).toBe(0);
-    expect(state!.currentTier).toBe("bronze");
+    expect(state!.currentTier).toBe("iniciante");
     expect(state!.lastReplayedEventId).not.toBeNull();
 
     await persistState(state!);

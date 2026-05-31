@@ -205,7 +205,7 @@ model GamificationState {
   customerId            Int       @id
   monthlyPoints         Int       @default(0)
   lifetimeXp            Int       @default(0)
-  currentTier           String    @default("bronze")
+  currentTier           String    @default("iniciante")
   proposedTier          String?
   currentStreakDays     Int       @default(0)
   streakShieldAvailable Boolean   @default(false)
@@ -224,7 +224,7 @@ model GamificationMonthlySnapshot {
   monthlyPoints   Int       @default(0)
   xpAtPeriodEnd   Int       @default(0)
   classesInPeriod Int       @default(0)
-  finalTier       String    @default("bronze")
+  finalTier       String    @default("iniciante")
   sealedAt        DateTime?
 
   @@id([customerId, pointsPeriod])

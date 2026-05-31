@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import type { GamificationStateView, Tier } from "./types";
+import type { GamificationStateView } from "./types";
+import type { Tier } from "./constants";
 
 /**
  * Materialize the gamification state for a customer by replaying their
@@ -47,7 +48,7 @@ export async function materializeState(customerId: number): Promise<Gamification
     customerId,
     monthlyPoints,
     lifetimeXp,
-    currentTier: "bronze" as Tier,
+    currentTier: "iniciante" as Tier,
     currentStreakDays: 0,
     streakShieldAvailable: false,
     lastClassAt,

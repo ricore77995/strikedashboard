@@ -72,7 +72,7 @@ export async function executeTrackA(customerId: number, operatorId: number): Pro
     update: {
       monthlyPoints: 0,
       lifetimeXp: 0,
-      currentTier: "bronze",
+      currentTier: "iniciante",
       currentStreakDays: 0,
       streakShieldAvailable: false,
       lastClassAt: null,

@@ -32,7 +32,7 @@ describe("materializeState", () => {
     expect(state).not.toBeNull();
     expect(state!.monthlyPoints).toBe(0);
     expect(state!.lifetimeXp).toBe(0);
-    expect(state!.currentTier).toBe("bronze");
+    expect(state!.currentTier).toBe("iniciante");
   });
 
   it("accumulates points and xp from events", async () => {
