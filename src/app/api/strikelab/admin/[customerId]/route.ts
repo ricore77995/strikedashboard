@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTierProgress } from "@/lib/gamification/tier";
-
-/** Safely parse a stored event payload, extracting only the fields the UI shows. */
-function parsePayload(raw: string | null): { className: string | null; boostsApplied: string[] } {
-  if (!raw) return { className: null, boostsApplied: [] };
-  try {
-    const p = JSON.parse(raw) as Record<string, unknown>;
-    const className = typeof p.className === "string" ? p.className : null;
-    const boostsApplied = Array.isArray(p.boostsApplied)
-      ? p.boostsApplied.filter((b): b is string => typeof b === "string")
-      : [];
-    return { className, boostsApplied };
-  } catch {
-    return { className: null, boostsApplied: [] };
-  }
-}
+import { parseEventPayload } from "@/lib/gamification/event-view";
 
 /**
  * GET /api/strikelab/admin/[customerId]
@@ -84,7 +70,7 @@ export async function GET(
         }
       : null,
     events: events.map((e) => {
-      const { className, boostsApplied } = parsePayload(e.payloadJson);
+      const { className, boostsApplied } = parseEventPayload(e.payloadJson);
       return {
         id: e.id,
         eventId: e.eventId,
