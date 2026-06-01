@@ -1,8 +1,10 @@
 ---
 title: StrikeLab Phase 2 — Music Choice (+50) Design Spec
 type: technical
-status: approved-pre-implementation
+status: shipped
 created: 2026-06-01
+shipped: 2026-06-01
+merge_commit: 24f5ed6
 tags:
   - strikelab
   - phase-2
@@ -143,3 +145,26 @@ result), so the hook needs no extra lookup.
 unbook claw-back (unnecessary — credit only fires on attendance), prod go-live
 (flipping `STRIKELAB_REAL_POINTS_ENABLED` stays a separate decision per
 [[StrikeLab-Phase-1-Engine-Handoff]]).
+
+## Shipped — 2026-06-01 (merge `24f5ed6`)
+
+Built via subagent-driven TDD (5 tasks, two-stage review each + final whole-branch
+review). All 3 acceptance criteria met: 136 gamification tests (incl. 7 new),
+476/477 full suite, `tsc` 0, `npm run build` passes; manual e2e confirmed +50 once
+and 3rd-in-week capped. **Prod flags remain OFF.**
+
+Net code: `src/lib/gamification/music-choice.ts` (new hook), wired into
+`poll/classes.ts`; `music_choice_accepted` event type + "Música escolhida" label +
+`MUSIC_CHOICE_WEEKLY_CAP=2` constant.
+
+One extra cleanup the final review surfaced: `getISOWeekStart` had **three**
+duplicate copies (perfect-week, supera-ritmo, **boosts**), not two — all three now
+import the single `poll/shared.ts` source.
+
+### Known follow-up (not this slice)
+
+`getISOWeekStart` computes the week boundary in server (UTC) time, not Lisbon — so
+during WEST the boundary is ~1h off, briefly under-counting the cap window. Pre-existing
+and engine-wide (affects perfect-week, supera-ritmo, and this cap). Fix once in
+`poll/shared.ts` (e.g. build the Monday via `Date.UTC` from the Lisbon Y-M-D). Low
+impact for a 3-person gym; tracked separately.
