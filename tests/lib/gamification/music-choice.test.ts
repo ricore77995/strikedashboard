@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { checkMusicChoice } from "@/lib/gamification/music-choice";
 import { getCurrentPeriod } from "@/lib/gamification/poll/shared";
+import { eventLabel } from "@/lib/gamification/labels";
 
 const CID = 92401;
 const PHONE = "+351924000001";
@@ -138,5 +139,9 @@ describe("checkMusicChoice", () => {
     await checkMusicChoice(CID, PHONE, CLASS_A);
     restore();
     expect(await musicEventCount()).toBe(0);
+  });
+
+  it("renders a Pt-PT label for the activity feed", () => {
+    expect(eventLabel("music_choice_accepted")).toBe("Música escolhida");
   });
 });
