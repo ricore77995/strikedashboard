@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCurrentPeriod } from "./poll/shared";
+import { getCurrentPeriod, getISOWeekStart } from "./poll/shared";
 import type { BoostDef, PlanCategory } from "./constants";
 import { BOOST_CAP, RENOVACAO_BOOST_DAYS, PERFECT_WEEK_THRESHOLD } from "./constants";
 
@@ -80,24 +80,4 @@ export async function getActiveBoostsForCheckin(
   }
 
   return boosts;
-}
-
-/**
- * Get the ISO week start (Monday) for a given date, in Lisbon timezone.
- */
-function getISOWeekStart(date: Date): Date {
-  const lisbonDate = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Lisbon",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-
-  const d = new Date(lisbonDate);
-  const day = d.getDay();
-  // getDay() returns 0=Sun, 1=Mon, ... Shift to make Monday=0
-  const diff = day === 0 ? 6 : day - 1;
-  d.setDate(d.getDate() - diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
 }

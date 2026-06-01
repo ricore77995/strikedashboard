@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { appendEvent } from "./event-log";
+import { getISOWeekStart } from "./poll/shared";
 import { PERFECT_WEEK_THRESHOLD, PERFECT_WEEK_BONUS, type PlanCategory } from "./constants";
 
 /**
@@ -53,22 +54,6 @@ export async function checkPerfectWeek(customerId: number, planCategory: PlanCat
     idempotencyKey: `perfect_week:${customerId}:${isoWeek}`,
     pointsPeriod: getPeriodFromWeek(isoWeek),
   });
-}
-
-function getISOWeekStart(date: Date): Date {
-  const lisbonDate = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Lisbon",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-
-  const d = new Date(lisbonDate);
-  const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-  d.setDate(d.getDate() - diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
 }
 
 function getISOWeekString(date: Date): string {

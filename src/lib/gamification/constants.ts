@@ -110,8 +110,11 @@ export const COMEBACK_BONUS = 250;
 /** Points awarded on supera teu ritmo. */
 export const SUPERA_BONUS = 250;
 
-/** Points awarded on music choice accepted (cap 2/week). */
+/** Points awarded on music choice accepted (see MUSIC_CHOICE_WEEKLY_CAP). */
 export const MUSIC_CHOICE_BONUS = 50;
+
+/** Max music-choice credits per ISO week. */
+export const MUSIC_CHOICE_WEEKLY_CAP = 2;
 
 /** Renovacao boost duration in days. */
 export const RENOVACAO_BOOST_DAYS = 14;

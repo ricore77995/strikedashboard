@@ -33,3 +33,20 @@ export function isWithinOpsHours(startHour: number, endHour: number): boolean {
   );
   return hour >= startHour && hour < endHour;
 }
+
+/** Start of the current ISO week (Monday 00:00, Europe/Lisbon). */
+export function getISOWeekStart(date: Date): Date {
+  const lisbonDate = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Lisbon",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+
+  const d = new Date(lisbonDate);
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
