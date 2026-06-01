@@ -39,6 +39,30 @@ export async function findCustomerByPhone(e164: string): Promise<YogoCustomer | 
 
 export function clearCustomerCache(): void {
   cache = null;
+  idCache = null;
+}
+
+// Id-keyed index over the same customer list used for phone lookups. Cached
+// 60s so a top-N leaderboard resolves all names from one (already-warm) fetch
+// instead of N per-user calls.
+let idCache: { map: Map<number, YogoCustomer>; expiresAt: number } | null = null;
+
+export async function getCustomersByIds(ids: number[]): Promise<Map<number, YogoCustomer>> {
+  const now = Date.now();
+  if (!idCache || idCache.expiresAt <= now) {
+    const customers = await fetchAllCustomers();
+    const map = new Map<number, YogoCustomer>();
+    for (const c of customers) {
+      if (typeof c.id === "number") map.set(c.id, c);
+    }
+    idCache = { map, expiresAt: now + TTL_MS };
+  }
+  const out = new Map<number, YogoCustomer>();
+  for (const id of ids) {
+    const c = idCache.map.get(id);
+    if (c) out.set(id, c);
+  }
+  return out;
 }
 
 async function getPhoneIndex(): Promise<Map<string, YogoCustomer>> {

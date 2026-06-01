@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { tierLabel, eventLabel, boostLabel } from "@/lib/gamification/labels";
+import { Leaderboard, type LeaderboardEntry } from "./leaderboard";
 
 interface MeData {
   customerId: number;
+  leaderboard: LeaderboardEntry[];
   state: {
     monthlyPoints: number;
     lifetimeXp: number;
@@ -117,6 +119,10 @@ export function MeClient() {
           color="text-cyan-400"
         />
       </div>
+
+      {/* Leaderboard */}
+      <h2 className="text-sm font-medium text-zinc-400 mt-8 mb-2">Classificação do mês 🏆</h2>
+      <Leaderboard entries={data.leaderboard} />
 
       {/* Activity feed */}
       <h2 className="text-sm font-medium text-zinc-400 mt-8 mb-2">Atividade recente</h2>

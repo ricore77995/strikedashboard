@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getTierProgress } from "@/lib/gamification/tier";
 import { parseEventPayload } from "@/lib/gamification/event-view";
 import { verifyStudentToken } from "@/lib/gamification/student-link";
+import { getMonthlyLeaderboard, formatLeaderName } from "@/lib/gamification/leaderboard";
+import { getCustomersByIds } from "@/lib/yogo/lookup";
 
 /**
  * GET /api/strikelab/me?t=<token>
@@ -47,8 +49,21 @@ export async function GET(req: NextRequest) {
   // student page always renders cleanly.
   const lifetimeXp = state?.lifetimeXp ?? 0;
 
+  // Top-10 monthly leaderboard with names resolved from Yogo (first name + last
+  // initial). Falls back to an anonymous label if a name can't be resolved.
+  const board = await getMonthlyLeaderboard(customerId, 10);
+  const names = await getCustomersByIds(board.map((b) => b.customerId));
+  const leaderboard = board.map((b) => ({
+    rank: b.rank,
+    name: formatLeaderName(names.get(b.customerId)?.first_name, names.get(b.customerId)?.last_name)
+      ?? `Atleta #${b.rank}`,
+    monthlyPoints: b.monthlyPoints,
+    isViewer: b.isViewer,
+  }));
+
   return NextResponse.json({
     customerId,
+    leaderboard,
     state: {
       monthlyPoints: state?.monthlyPoints ?? 0,
       lifetimeXp,
