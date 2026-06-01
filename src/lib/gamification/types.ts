@@ -28,7 +28,8 @@ export type EventType =
   | "milestone_achieved"
   | "retroactive_replay"
   // Phase 2 event types
-  | "music_choice_accepted";
+  | "music_choice_accepted"
+  | "weekly_challenge_won";
 
 /** Source of the event — who/what triggered it. */
 export type EventSource = "system" | "bot" | "admin" | "cron" | "retroactive_replay";

@@ -7,6 +7,8 @@
     { "path": "/api/cron/spotify-playlists", "schedule": "0 4 * * *" },
     { "path": "/api/cron/spotify-playlist-lock", "schedule": "0 23 * * *" },
     { "path": "/api/cron/strikelab-poll-classes", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/strikelab-poll-memberships", "schedule": "0 2 * * *" }
+    { "path": "/api/cron/strikelab-poll-memberships", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/strikelab-challenge-launch", "schedule": "0 11 * * 3" },
+    { "path": "/api/cron/strikelab-challenge-resolve", "schedule": "0 5 * * 1" }
   ]
 }

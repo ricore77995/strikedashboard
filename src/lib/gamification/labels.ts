@@ -39,6 +39,7 @@ export const EVENT_LABELS: Record<EventType, string> = {
   milestone_achieved: "Marco atingido",
   retroactive_replay: "Replay retroactivo",
   music_choice_accepted: "Música escolhida",
+  weekly_challenge_won: "Desafio semanal",
 };
 
 /** Short Pt-PT label for each boost id stored in event payloads. */
