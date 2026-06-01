@@ -1,8 +1,10 @@
 ---
 title: StrikeLab Phase 2 — Weekly Challenge Engine (slice 1) Design Spec
 type: technical
-status: approved-pre-implementation
+status: shipped
 created: 2026-06-01
+shipped: 2026-06-01
+merge_commit: ab1e7ff
 tags:
   - strikelab
   - phase-2
@@ -188,3 +190,31 @@ the read-only "this week's challenge" view.
   depend on the UGC/bot-report feature.
 - **Rotation hardening** for pool >1 across skipped weeks.
 - **Prod go-live:** flipping `STRIKELAB_*` flags stays a separate decision.
+
+## Shipped — 2026-06-01 (merge `ab1e7ff`)
+
+Built via subagent-driven TDD (9 tasks, two-stage review each + final whole-branch
+review). 15 challenge tests, **491/492 full suite**, `tsc` 0, `npm run build` passes
+(both cron routes register); manual e2e confirmed 5 winners at +250/xp0 in rank order,
+6th capped, run resolved, idempotent re-run. **Prod flags remain OFF.**
+
+Net code (`src/lib/gamification/challenges/`): `window.ts`, `catalog.ts`, `rotation.ts`,
+`scorer-flash-checkin.ts`, `launch.ts`, `resolve.ts` + 2 cron routes + the
+`StrikelabChallengeRun` model + `weekly_challenge_won` type/label.
+
+Two review-driven hardenings landed beyond the original plan:
+- **±1-day padded Yogo date range** in `fetchWindowClasses` (Yogo dates are Lisbon-local;
+  the scorer trims by ms, so over-fetch is harmless) — prevents a tz-edge class miss.
+- **Empty-fetch guard** in `resolveWeeklyChallenge`: zero classes fetched = transient
+  Yogo hiccup → skip without resolving (don't burn the week); a genuinely quiet week
+  (classes present, no check-ins) still resolves.
+
+### Known follow-ups (not this slice)
+
+- **Period attribution at a month boundary:** `resolve` stamps `pointsPeriod =
+  getCurrentPeriod()` at resolve time (Mon of week N+1). For a week straddling month-end,
+  points bucket into the new month if the monthly reset ran between the check-in week and
+  the Monday resolve. Consistent with the music-choice resolve-time pattern; fix in the
+  leaderboard slice by deriving the period from `run.windowEnd`.
+- **`getISOWeekStart` UTC-vs-Lisbon drift** (shared engine follow-up from the music slice)
+  — the challenge window deliberately avoids it via the tz-correct `window.ts`.
