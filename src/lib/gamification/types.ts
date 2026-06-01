@@ -26,7 +26,9 @@ export type EventType =
   | "supera_teu_ritmo"
   | "perfect_week"
   | "milestone_achieved"
-  | "retroactive_replay";
+  | "retroactive_replay"
+  // Phase 2 event types
+  | "music_choice_accepted";
 
 /** Source of the event — who/what triggered it. */
 export type EventSource = "system" | "bot" | "admin" | "cron" | "retroactive_replay";
