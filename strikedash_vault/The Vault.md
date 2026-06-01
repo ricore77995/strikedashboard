@@ -26,6 +26,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Sprint-8-Student-UI]] — **Sprint 8 working log** — detailed per-slice notes (1–5): admin page, self-service API, student page, WhatsApp menu link, leaderboard
 - [[StrikeLab-Phase-2-Music-Choice-Design]] — **Phase 2 slice 1 design** — +50 music-choice bonus credited on attendance (cap 2/week), new post-checkin hook, getISOWeekStart consolidation
 - [Music Choice Plan](../docs/superpowers/plans/2026-06-01-strikelab-music-choice.md) — 5-task TDD implementation plan for the music-choice slice
+- [[StrikeLab-Phase-2-Weekly-Challenges-Design]] — **Phase 2 slice 2 design** — weekly Flash Check-in challenge engine; scorer reads Yogo directly (not the event log), replay-safe resolve, read-only UI deferred to its own slice
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
