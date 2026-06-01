@@ -257,3 +257,17 @@ model YogoMembershipSnapshot {
   @@id([userId, snapshotDate])
   @@index([snapshotDate])
 }
+
+/// One row per ISO week. Tracks the active/resolved state of a weekly challenge run.
+model StrikelabChallengeRun {
+  id           String    @id @default(cuid())
+  challengeKey String
+  isoWeek      String    @unique
+  status       String // "active" | "resolved"
+  windowStart  DateTime
+  windowEnd    DateTime
+  launchedAt   DateTime
+  resolvedAt   DateTime?
+
+  @@index([status])
+}
