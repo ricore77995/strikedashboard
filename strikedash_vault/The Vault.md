@@ -28,6 +28,7 @@ Central index for Striker's House Dashboard documentation.
 - [Music Choice Plan](../docs/superpowers/plans/2026-06-01-strikelab-music-choice.md) — 5-task TDD implementation plan for the music-choice slice
 - [[StrikeLab-Phase-2-Weekly-Challenges-Design]] — **Phase 2 slice 2 design** — weekly Flash Check-in challenge engine; scorer reads Yogo directly (not the event log), replay-safe resolve, read-only UI deferred to its own slice
 - [Weekly Challenges Plan](../docs/superpowers/plans/2026-06-01-strikelab-weekly-challenges.md) — 9-task TDD plan for the challenge engine (model, tz window, scorer, launch/resolve, crons)
+- [[StrikeLab-Next-Phase-Visibility]] — **post go-live re-evaluation + next phase** — engine live but cold/invisible; Slice A (nav link + overview) → Slice B (challenge read-only UI); then referrals/UGC/Champions League
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
