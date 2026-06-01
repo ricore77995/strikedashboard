@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "GamificationIdentity" (
+CREATE TABLE IF NOT EXISTS "GamificationIdentity" (
     "customerId" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "phoneE164" TEXT NOT NULL,
     "email" TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE "GamificationIdentity" (
 );
 
 -- CreateTable
-CREATE TABLE "GamificationEventLog" (
+CREATE TABLE IF NOT EXISTS "GamificationEventLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "eventId" INTEGER NOT NULL,
     "customerId" INTEGER NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE "GamificationEventLog" (
 );
 
 -- CreateTable
-CREATE TABLE "GamificationState" (
+CREATE TABLE IF NOT EXISTS "GamificationState" (
     "customerId" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "monthlyPoints" INTEGER NOT NULL DEFAULT 0,
     "lifetimeXp" INTEGER NOT NULL DEFAULT 0,
@@ -60,7 +60,7 @@ CREATE TABLE "GamificationState" (
 );
 
 -- CreateTable
-CREATE TABLE "GamificationMonthlySnapshot" (
+CREATE TABLE IF NOT EXISTS "GamificationMonthlySnapshot" (
     "customerId" INTEGER NOT NULL,
     "pointsPeriod" TEXT NOT NULL,
     "monthlyPoints" INTEGER NOT NULL DEFAULT 0,
@@ -73,7 +73,7 @@ CREATE TABLE "GamificationMonthlySnapshot" (
 );
 
 -- CreateTable
-CREATE TABLE "GamificationResetAudit" (
+CREATE TABLE IF NOT EXISTS "GamificationResetAudit" (
     "resetId" TEXT NOT NULL PRIMARY KEY,
     "resetPeriod" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'pending',
@@ -84,7 +84,7 @@ CREATE TABLE "GamificationResetAudit" (
 );
 
 -- CreateTable
-CREATE TABLE "YogoMembershipSnapshot" (
+CREATE TABLE IF NOT EXISTS "YogoMembershipSnapshot" (
     "userId" INTEGER NOT NULL,
     "snapshotDate" TEXT NOT NULL,
     "membershipTypeId" INTEGER,
@@ -99,34 +99,34 @@ CREATE TABLE "YogoMembershipSnapshot" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationIdentity_phoneE164_key" ON "GamificationIdentity"("phoneE164");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationIdentity_phoneE164_key" ON "GamificationIdentity"("phoneE164");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationIdentity_email_key" ON "GamificationIdentity"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationIdentity_email_key" ON "GamificationIdentity"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationIdentity_whatsappWaId_key" ON "GamificationIdentity"("whatsappWaId");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationIdentity_whatsappWaId_key" ON "GamificationIdentity"("whatsappWaId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationIdentity_manychatSubscriber_key" ON "GamificationIdentity"("manychatSubscriber");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationIdentity_manychatSubscriber_key" ON "GamificationIdentity"("manychatSubscriber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationIdentity_instagramHandle_key" ON "GamificationIdentity"("instagramHandle");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationIdentity_instagramHandle_key" ON "GamificationIdentity"("instagramHandle");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationEventLog_eventId_key" ON "GamificationEventLog"("eventId");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationEventLog_eventId_key" ON "GamificationEventLog"("eventId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GamificationEventLog_idempotencyKey_key" ON "GamificationEventLog"("idempotencyKey");
+CREATE UNIQUE INDEX IF NOT EXISTS "GamificationEventLog_idempotencyKey_key" ON "GamificationEventLog"("idempotencyKey");
 
 -- CreateIndex
-CREATE INDEX "GamificationEventLog_customerId_createdAt_idx" ON "GamificationEventLog"("customerId", "createdAt");
+CREATE INDEX IF NOT EXISTS "GamificationEventLog_customerId_createdAt_idx" ON "GamificationEventLog"("customerId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "GamificationEventLog_eventType_pointsPeriod_idx" ON "GamificationEventLog"("eventType", "pointsPeriod");
+CREATE INDEX IF NOT EXISTS "GamificationEventLog_eventType_pointsPeriod_idx" ON "GamificationEventLog"("eventType", "pointsPeriod");
 
 -- CreateIndex
-CREATE INDEX "GamificationEventLog_pointsPeriod_idx" ON "GamificationEventLog"("pointsPeriod");
+CREATE INDEX IF NOT EXISTS "GamificationEventLog_pointsPeriod_idx" ON "GamificationEventLog"("pointsPeriod");
 
 -- CreateIndex
-CREATE INDEX "YogoMembershipSnapshot_snapshotDate_idx" ON "YogoMembershipSnapshot"("snapshotDate");
+CREATE INDEX IF NOT EXISTS "YogoMembershipSnapshot_snapshotDate_idx" ON "YogoMembershipSnapshot"("snapshotDate");

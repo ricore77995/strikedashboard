@@ -1,7 +1,7 @@
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
-CREATE TABLE "new_GamificationMonthlySnapshot" (
+CREATE TABLE IF NOT EXISTS "new_GamificationMonthlySnapshot" (
     "customerId" INTEGER NOT NULL,
     "pointsPeriod" TEXT NOT NULL,
     "monthlyPoints" INTEGER NOT NULL DEFAULT 0,
@@ -13,9 +13,9 @@ CREATE TABLE "new_GamificationMonthlySnapshot" (
     PRIMARY KEY ("customerId", "pointsPeriod")
 );
 INSERT INTO "new_GamificationMonthlySnapshot" ("classesInPeriod", "customerId", "finalTier", "monthlyPoints", "pointsPeriod", "sealedAt", "xpAtPeriodEnd") SELECT "classesInPeriod", "customerId", "finalTier", "monthlyPoints", "pointsPeriod", "sealedAt", "xpAtPeriodEnd" FROM "GamificationMonthlySnapshot";
-DROP TABLE "GamificationMonthlySnapshot";
+DROP TABLE IF EXISTS "GamificationMonthlySnapshot";
 ALTER TABLE "new_GamificationMonthlySnapshot" RENAME TO "GamificationMonthlySnapshot";
-CREATE TABLE "new_GamificationState" (
+CREATE TABLE IF NOT EXISTS "new_GamificationState" (
     "customerId" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "monthlyPoints" INTEGER NOT NULL DEFAULT 0,
     "lifetimeXp" INTEGER NOT NULL DEFAULT 0,
@@ -30,7 +30,7 @@ CREATE TABLE "new_GamificationState" (
     CONSTRAINT "GamificationState_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "GamificationIdentity" ("customerId") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 INSERT INTO "new_GamificationState" ("currentStreakDays", "currentTier", "customerId", "lastClassAt", "lastReplayedEventId", "lifetimeXp", "monthlyPoints", "proposedTier", "shieldResetForMonth", "streakShieldAvailable", "updatedAt") SELECT "currentStreakDays", "currentTier", "customerId", "lastClassAt", "lastReplayedEventId", "lifetimeXp", "monthlyPoints", "proposedTier", "shieldResetForMonth", "streakShieldAvailable", "updatedAt" FROM "GamificationState";
-DROP TABLE "GamificationState";
+DROP TABLE IF EXISTS "GamificationState";
 ALTER TABLE "new_GamificationState" RENAME TO "GamificationState";
 PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;

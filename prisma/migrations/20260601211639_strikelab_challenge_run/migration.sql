@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "StrikelabChallengeRun" (
+CREATE TABLE IF NOT EXISTS "StrikelabChallengeRun" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "challengeKey" TEXT NOT NULL,
     "isoWeek" TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE "StrikelabChallengeRun" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StrikelabChallengeRun_isoWeek_key" ON "StrikelabChallengeRun"("isoWeek");
+CREATE UNIQUE INDEX IF NOT EXISTS "StrikelabChallengeRun_isoWeek_key" ON "StrikelabChallengeRun"("isoWeek");
 
 -- CreateIndex
-CREATE INDEX "StrikelabChallengeRun_status_idx" ON "StrikelabChallengeRun"("status");
+CREATE INDEX IF NOT EXISTS "StrikelabChallengeRun_status_idx" ON "StrikelabChallengeRun"("status");
