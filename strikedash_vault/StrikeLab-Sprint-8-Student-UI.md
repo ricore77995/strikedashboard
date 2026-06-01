@@ -25,7 +25,8 @@ page), then to students (self-service). One verified slice at a time.
 | 1 | Enhanced admin student detail page | ✅ Done (merged to `main`) |
 | 2 | Student self-service API (`/api/strikelab/me`) | ✅ Done |
 | 3 | Student-facing dashboard page (`/strikelab/me`) | ✅ Done |
-| 4 | Wire the magic link into the WhatsApp bot (mint + send) | ⏳ Next |
+| 4 | Wire the magic link into the WhatsApp menu | ✅ Done |
+| 5 | Ranked leaderboard (cross-student) | 🔵 Deferred — see note |
 
 ## Decision — Student authentication = WhatsApp magic-link token
 
@@ -119,6 +120,50 @@ weekend+streak_5 boosts) against a seeded local DB, then DB restored exactly.
 **Not visually screenshot-verified** (no Playwright installed; judged disproportionate
 to install for one page). Layout is standard Tailwind over a verified data contract —
 recommend eyeballing on a phone with a real link once `STRIKELAB_LINK_SECRET` is set.
+
+## Slice 4 — Magic link in the WhatsApp menu (done)
+
+**Goal:** an onboarded student gets their personal `/strikelab/me` link from the
+WhatsApp menu.
+
+**Changed:**
+- `lib/gamification/student-link.ts` — added `buildStudentLink(customerId)`:
+  `STRIKELAB_PUBLIC_BASE_URL` + `mintStudentToken` → full URL. Returns null (fails
+  closed) if base URL or secret is unset. +4 tests.
+- `lib/wa/handlers/strikelab-onboard.ts` — added `handleStrikelabMe(phone)`: looks up
+  identity by phone, sends the personal link only if onboarded + `consentTraining` +
+  not erased; otherwise nudges to onboard / "a ser configurado" / "removido". +5 tests.
+- `lib/wa/render.ts` — `renderOutrosMenu()` converted from a 3-button message to a
+  **list** (WhatsApp buttons cap at 3; the menu was full). Rows: Playlist · 🏆 Os Meus
+  Pontos · Contacto · Voltar.
+- `lib/wa/handlers/menu.ts` — `handleOutros` now sends a list (`sendList`).
+- `lib/wa/dispatch.ts` — unified menu routing via a kind-agnostic `navId` (button OR
+  list_pick), so the "Outros" rows route correctly; added `btn_strikelab_me` →
+  `handleStrikelabMe`. Numeric class-pick ids don't match `btn_*`, so the booking flow
+  is unaffected.
+- `.env.example` — added `STRIKELAB_PUBLIC_BASE_URL`.
+
+**Verification:** `tsc` clean · build compiles · **full suite 462 passed / 1 skipped**
+(no regression in booking/menu flows from the button→list change) · token + link +
+handler unit-tested.
+
+### Naming note
+The user asked for "Leaderboard", but the two answers conflicted (format = *personal
+progress link, not rankings*). Built the personal-link delivery and labeled the menu row
+**"🏆 Os Meus Pontos"** (accurate) rather than "Leaderboard" (would mislead — no
+rankings). One string to change if a different label is wanted.
+
+### Deferred — ranked leaderboard (slice 5)
+A real cross-student leaderboard is **not** built. If wanted: privacy model leaning
+toward *only `consentRealName` students named, others anonymized, requester always sees
+own rank* (the user's stray pick was "first name + last initial for all" — higher GDPR
+risk; revisit before building).
+
+### ⚠️ Deploy TODO (now two vars)
+Set in Vercel (all envs) before the menu item works:
+- `STRIKELAB_LINK_SECRET` — `openssl rand -base64 32`
+- `STRIKELAB_PUBLIC_BASE_URL` — e.g. `https://dash.strikershouse.pt`
+Until both are set, the bot replies "a ser configurado" (fail-closed).
 
 ## Gotchas found
 

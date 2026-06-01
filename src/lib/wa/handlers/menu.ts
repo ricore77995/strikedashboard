@@ -1,4 +1,4 @@
-import { sendButton, sendText } from "@/lib/wa/meta";
+import { sendButton, sendList, sendText } from "@/lib/wa/meta";
 import { renderMenu, renderOutrosMenu } from "@/lib/wa/render";
 import { resetToIdle, type SessionRow } from "@/lib/wa/session";
 
@@ -26,10 +26,11 @@ export async function endInteraction(session: SessionRow, phoneE164: string): Pr
   }
 }
 
-// "Outros" button → interactive sub-menu with Playlist and Contacto options.
-// No state change; the sub-menu buttons are handled via dispatch routing.
+// "Outros" button → interactive sub-menu (a list) with Playlist, Os Meus
+// Pontos (StrikeLab), and Contacto options. No state change; the row picks are
+// handled via dispatch routing.
 export async function handleOutros(phoneE164: string): Promise<void> {
-  await sendButton(phoneE164, renderOutrosMenu());
+  await sendList(phoneE164, renderOutrosMenu());
 }
 
 // "Contacto" sub-option — static message for human hand-off.

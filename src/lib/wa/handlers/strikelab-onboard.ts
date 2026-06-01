@@ -5,6 +5,7 @@ import { upsertIdentity, findByCustomerId } from "@/lib/gamification/identity";
 import { applyConsent } from "@/lib/gamification/consent";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { resetToIdle, transition, type SessionRow } from "@/lib/wa/session";
+import { buildStudentLink } from "@/lib/gamification/student-link";
 
 /**
  * StrikeLab onboarding state machine.
@@ -120,6 +121,42 @@ export async function handleStrikelabOnboard(session: SessionRow): Promise<void>
       { id: "strikelab_decline", title: "Não, obrigado" },
     ],
   });
+}
+
+/**
+ * "Os Meus Pontos" menu option — send the student their personal StrikeLab
+ * progress link. No state change (kiosk-style; like Playlist/Contacto).
+ *
+ * Only onboarded + consented students get a link; the link is personal and
+ * verified by /api/strikelab/me. Falls closed if the feature is unconfigured.
+ */
+export async function handleStrikelabMe(phoneE164: string): Promise<void> {
+  const identity = await db.gamificationIdentity.findUnique({
+    where: { phoneE164 },
+  });
+
+  if (!identity || !identity.optInAt || !identity.consentTraining) {
+    await sendText(
+      phoneE164,
+      "Ainda não estás no StrikeLab! Escreve 'strikelab' para te inscreveres e começares a ganhar pontos. 🏆",
+    );
+    return;
+  }
+  if (identity.erasedAt) {
+    await sendText(phoneE164, "O teu perfil StrikeLab foi removido.");
+    return;
+  }
+
+  const link = buildStudentLink(identity.customerId);
+  if (!link) {
+    await sendText(phoneE164, "O StrikeLab está a ser configurado. Tenta mais tarde. 🙏");
+    return;
+  }
+
+  await sendText(
+    phoneE164,
+    `🏆 A tua evolução StrikeLab:\n\n${link}\n\nEste link é pessoal — não o partilhes.`,
+  );
 }
 
 /** Handle consent response buttons. */
