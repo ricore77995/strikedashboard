@@ -26,7 +26,7 @@ page), then to students (self-service). One verified slice at a time.
 | 2 | Student self-service API (`/api/strikelab/me`) | ✅ Done |
 | 3 | Student-facing dashboard page (`/strikelab/me`) | ✅ Done |
 | 4 | Wire the magic link into the WhatsApp menu | ✅ Done |
-| 5 | Ranked leaderboard (cross-student) | 🔵 Deferred — see note |
+| 5 | Ranked leaderboard (cross-student) | ✅ Done |
 
 ## Decision — Student authentication = WhatsApp magic-link token
 
@@ -153,11 +153,35 @@ progress link, not rankings*). Built the personal-link delivery and labeled the 
 **"🏆 Os Meus Pontos"** (accurate) rather than "Leaderboard" (would mislead — no
 rankings). One string to change if a different label is wanted.
 
-### Deferred — ranked leaderboard (slice 5)
-A real cross-student leaderboard is **not** built. If wanted: privacy model leaning
-toward *only `consentRealName` students named, others anonymized, requester always sees
-own rank* (the user's stray pick was "first name + last initial for all" — higher GDPR
-risk; revisit before building).
+## Slice 5 — Monthly leaderboard (done)
+
+**Goal:** the student page shows a top-10 monthly ranking with the viewer highlighted.
+
+**Privacy decision (user, informed):** ranked students shown by **first name + last
+initial for all** eligible participants. User was warned twice this is higher GDPR risk
+than consent-gated naming and **explicitly accepted** it. Eligibility is still guarded:
+only `optInAt` set + `consentTraining` + not erased + monthlyPoints > 0 appear. **Metric:
+monthly points, top 10 only** (viewer not shown a position if outside the top 10).
+
+**Changed:**
+- `lib/gamification/leaderboard.ts` — **new.** `formatLeaderName(first,last)` → "João S."
+  (null if no first name); `getMonthlyLeaderboard(viewerId, limit)` → top-N eligible
+  states by monthlyPoints (tie-break lifetimeXp, customerId), each flagged `isViewer`.
+  Pure-DB, +7 tests.
+- `lib/yogo/lookup.ts` — added `getCustomersByIds()` with a 60s id-keyed cache over the
+  existing `fetchAllCustomers`, so all top-10 names resolve from one warm fetch instead
+  of N per-user calls.
+- `api/strikelab/me/route.ts` — response now includes `leaderboard[]` (rank, name,
+  monthlyPoints, isViewer); names resolved via Yogo, fall back to "Atleta #N".
+- `(public)/strikelab/me/leaderboard.tsx` — **new** component (medals, viewer highlight,
+  empty state). Wired into `me-client.tsx` as "Classificação do mês".
+
+**Verification:** `tsc` clean · build compiles · **full suite 469 passed / 1 skipped** ·
+leaderboard verified live in `/me` (ranked 500/300/100, isViewer correct, name fallback
+working) against seeded local data, then DB restored.
+
+**Surface:** lives on the existing `/strikelab/me` page — reachable via the WhatsApp
+"🏆 Os Meus Pontos" menu item from slice 4. No new menu plumbing.
 
 ### ⚠️ Deploy TODO (now two vars)
 Set in Vercel (all envs) before the menu item works:
