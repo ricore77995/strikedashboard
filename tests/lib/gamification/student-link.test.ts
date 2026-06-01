@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   mintStudentToken,
   verifyStudentToken,
+  buildStudentLink,
   STUDENT_LINK_TTL_DAYS,
 } from "@/lib/gamification/student-link";
 
@@ -75,5 +76,48 @@ describe("student-link token", () => {
     delete process.env.STRIKELAB_LINK_SECRET;
     expect(verifyStudentToken("1.a.b")).toEqual({ ok: false, reason: "no_secret" });
     expect(() => mintStudentToken(90001)).toThrow();
+  });
+});
+
+describe("buildStudentLink", () => {
+  let origSecret: string | undefined;
+  let origBase: string | undefined;
+
+  beforeEach(() => {
+    origSecret = process.env.STRIKELAB_LINK_SECRET;
+    origBase = process.env.STRIKELAB_PUBLIC_BASE_URL;
+    process.env.STRIKELAB_LINK_SECRET = SECRET;
+    process.env.STRIKELAB_PUBLIC_BASE_URL = "https://dash.strikershouse.pt";
+  });
+
+  afterEach(() => {
+    if (origSecret === undefined) delete process.env.STRIKELAB_LINK_SECRET;
+    else process.env.STRIKELAB_LINK_SECRET = origSecret;
+    if (origBase === undefined) delete process.env.STRIKELAB_PUBLIC_BASE_URL;
+    else process.env.STRIKELAB_PUBLIC_BASE_URL = origBase;
+  });
+
+  it("builds a URL with a verifiable token", () => {
+    const link = buildStudentLink(90001);
+    expect(link).not.toBeNull();
+    const url = new URL(link!);
+    expect(url.origin + url.pathname).toBe("https://dash.strikershouse.pt/strikelab/me");
+    const token = url.searchParams.get("t")!;
+    expect(verifyStudentToken(token)).toEqual({ ok: true, customerId: 90001 });
+  });
+
+  it("strips a trailing slash from the base URL", () => {
+    process.env.STRIKELAB_PUBLIC_BASE_URL = "https://dash.strikershouse.pt/";
+    expect(buildStudentLink(90001)).toContain("https://dash.strikershouse.pt/strikelab/me?t=");
+  });
+
+  it("returns null when the base URL is unset", () => {
+    delete process.env.STRIKELAB_PUBLIC_BASE_URL;
+    expect(buildStudentLink(90001)).toBeNull();
+  });
+
+  it("returns null when the secret is unset", () => {
+    delete process.env.STRIKELAB_LINK_SECRET;
+    expect(buildStudentLink(90001)).toBeNull();
   });
 });

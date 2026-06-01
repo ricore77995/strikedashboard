@@ -89,3 +89,24 @@ export function verifyStudentToken(token: string, opts?: { nowMs?: number }): Ve
 
   return { ok: true, customerId: cid };
 }
+
+/**
+ * Build the full student self-service URL for a customer.
+ *
+ * Returns null (fails closed) if STRIKELAB_PUBLIC_BASE_URL or
+ * STRIKELAB_LINK_SECRET is unset — callers should handle the null and tell the
+ * student the feature is being configured rather than send a broken link.
+ */
+export function buildStudentLink(
+  customerId: number,
+  opts?: { nowMs?: number; ttlDays?: number },
+): string | null {
+  const base = process.env.STRIKELAB_PUBLIC_BASE_URL;
+  if (!base) return null;
+  try {
+    const token = mintStudentToken(customerId, opts);
+    return `${base.replace(/\/+$/, "")}/strikelab/me?t=${token}`;
+  } catch {
+    return null;
+  }
+}

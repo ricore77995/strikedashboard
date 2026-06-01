@@ -29,6 +29,7 @@ import {
   handleStrikelabOnboard,
   handleStrikelabConsent,
   handleStrikelabParental,
+  handleStrikelabMe,
 } from "@/lib/wa/handlers/strikelab-onboard";
 
 // Dispatch routes an inbound WhatsApp message based on (1) menu button IDs,
@@ -64,18 +65,35 @@ export async function dispatch(phoneE164: string, message: MetaInboundMessage): 
     if (reset.ok) session = reset.session;
   }
 
+  // Menu/sub-menu picks arrive as buttons (main menu) or list rows ("Outros"
+  // is a list). Capture the id from either kind. Flow-specific list picks (e.g.
+  // numeric class ids) never match these btn_* names, so they fall through to
+  // the state switch below.
+  const navId = intent.kind === "button" || intent.kind === "list_pick" ? intent.id : null;
+
   // Universal escape: any state, any time.
-  if (intent.kind === "button" && intent.id === "btn_voltar_menu") {
+  if (navId === "btn_voltar_menu") {
     return endInteraction(session, phoneE164);
   }
 
-  // Top-of-funnel menu buttons reset state then fire the flow.
   // "strikelab" text trigger from IDLE
   if (intent.kind === "text" && intent.body.trim().toLowerCase() === "strikelab" &&
       (session.state === "IDLE" || session.state === "STRIKELAB_AWAIT_PARENTAL")) {
     return handleStrikelabOnboard(session);
   }
 
+  // "Outros" sub-menu options (sent as a list → arrive as list_pick).
+  if (navId === "btn_playlist") {
+    return handlePlaylistList(phoneE164);
+  }
+  if (navId === "btn_contacto") {
+    return handleContacto(phoneE164);
+  }
+  if (navId === "btn_strikelab_me") {
+    return handleStrikelabMe(phoneE164);
+  }
+
+  // Top-of-funnel menu buttons reset state then fire the flow.
   if (intent.kind === "button") {
     if (intent.id === "btn_reservar") {
       const s = await ensureIdle(session, phoneE164);
@@ -91,12 +109,6 @@ export async function dispatch(phoneE164: string, message: MetaInboundMessage): 
       const s = await ensureIdle(session, phoneE164);
       if (!s) return;
       return handleOutros(phoneE164);
-    }
-    if (intent.id === "btn_playlist") {
-      return handlePlaylistList(phoneE164);
-    }
-    if (intent.id === "btn_contacto") {
-      return handleContacto(phoneE164);
     }
     // Otherwise fall through — flow-specific buttons are handled in switch.
   }

@@ -181,14 +181,23 @@ export function renderMenu(): WaButtonPayload {
 
 // "Outros" sub-menu: lets the student pick between Playlist and Contacto.
 // WhatsApp caps button titles at 20c (honoured) and max 3 buttons (2 used).
-export function renderOutrosMenu(): WaButtonPayload {
+// Sub-menu for "Outros". A list (not buttons) so we can offer more than 3
+// options — WhatsApp button messages cap at 3, lists allow up to 10 rows.
+export function renderOutrosMenu(): WaListPayload {
   return {
-    type: "button",
+    type: "list",
     bodyText: "O que precisas?",
-    buttons: [
-      { id: "btn_playlist", title: "Playlist da aula" },
-      { id: "btn_contacto", title: "Contacto" },
-      { id: "btn_voltar_menu", title: "Voltar" },
+    buttonText: "Ver opções",
+    sections: [
+      {
+        title: "Opções",
+        rows: [
+          { id: "btn_playlist", title: "Playlist da aula" },
+          { id: "btn_strikelab_me", title: "🏆 Os Meus Pontos", description: "A tua evolução StrikeLab" },
+          { id: "btn_contacto", title: "Contacto" },
+          { id: "btn_voltar_menu", title: "Voltar" },
+        ],
+      },
     ],
   };
 }
