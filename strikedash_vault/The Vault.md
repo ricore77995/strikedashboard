@@ -25,6 +25,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Sprint-8-Handoff]] — **Sprint 8 cold-start handoff** — full student loop (bot → magic link → progress page + leaderboard), auth model, file inventory, deploy checklist, GDPR decision, gotchas
 - [[StrikeLab-Sprint-8-Student-UI]] — **Sprint 8 working log** — detailed per-slice notes (1–5): admin page, self-service API, student page, WhatsApp menu link, leaderboard
 - [[StrikeLab-Phase-2-Music-Choice-Design]] — **Phase 2 slice 1 design** — +50 music-choice bonus credited on attendance (cap 2/week), new post-checkin hook, getISOWeekStart consolidation
+- [Music Choice Plan](../docs/superpowers/plans/2026-06-01-strikelab-music-choice.md) — 5-task TDD implementation plan for the music-choice slice
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
