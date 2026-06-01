@@ -19,6 +19,11 @@ export interface AwardResult {
  *  - flag off → award nothing, leave run active (re-runnable later)
  *  - deterministic winner order; per-athlete idempotency key prevents double-pay
  *  - mark resolved only AFTER all awards
+ *
+ * Crash-recovery correctness depends on the scorer being DETERMINISTIC over the
+ * same (classes, window): a re-run re-derives the identical winner set, so
+ * already-paid athletes no-op on their idempotency key and the rest get paid.
+ * A future non-deterministic challenge would break this invariant.
  */
 export async function awardChallengeWinners(run: ChallengeRun, classes: ScorerClass[]): Promise<AwardResult> {
   if (process.env.STRIKELAB_REAL_POINTS_ENABLED !== "true") {
@@ -99,5 +104,11 @@ export async function resolveWeeklyChallenge(): Promise<AwardResult> {
   });
   if (!run) return { awarded: 0, skipped: "no_active_run" };
   const classes = await fetchWindowClasses(run);
+  // A real gym week always has classes Wed–Sun. Zero classes means Yogo returned
+  // a degraded/empty payload (HTTP-OK but no data) — treat as transient and DO
+  // NOT resolve, so the week isn't silently burned. The Monday cron (or a manual
+  // retry) will re-run. A genuinely quiet week still has classes (just no
+  // in-window check-ins) and resolves normally with 0 winners.
+  if (classes.length === 0) return { awarded: 0, skipped: "no_classes_fetched" };
   return awardChallengeWinners(run, classes);
 }
