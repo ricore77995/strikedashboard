@@ -40,6 +40,9 @@ export const EVENT_LABELS: Record<EventType, string> = {
   retroactive_replay: "Replay retroactivo",
   music_choice_accepted: "Música escolhida",
   weekly_challenge_won: "Desafio semanal",
+  referral_trial_only: "Indicação — Trial",
+  referral_phase_1: "Indicação — Subscrição",
+  referral_phase_2: "Indicação — Retenção",
 };
 
 /** Short Pt-PT label for each boost id stored in event payloads. */
@@ -50,6 +53,7 @@ export const BOOST_LABELS: Record<string, string> = {
   streak_10: "Streak 10",
   streak_15: "Streak 15",
   supera_ritmo: "Supera ritmo",
+  embaixador_referral: "Embaixador",
 };
 
 /** Tier label with a safe fallback for unknown values. */

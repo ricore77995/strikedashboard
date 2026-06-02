@@ -169,11 +169,14 @@ model GamificationIdentity {
   vacationPauseUntil DateTime?
   personalPauseUntil DateTime?
   erasedAt           DateTime?
+  referralCode       String?   @unique
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  events GamificationEventLog[]
-  state  GamificationState?
+  events        GamificationEventLog[]
+  state         GamificationState?
+  referralsMade Referral[] @relation("ReferralsMade")
+  referralGot   Referral?  @relation("ReferralReceived")
 }
 
 /// Immutable append-only log. Every state change writes one row.
@@ -284,4 +287,26 @@ model CronRunLog {
 
   @@index([cronName, startedAt(sort: Desc)])
   @@index([startedAt(sort: Desc)])
+}
+
+// ─── StrikeLab Referrals (Phase 2) ────────────────────────────────────
+
+/// Tracks referral relationships and 3-tier credit state machine.
+model Referral {
+  id                  String   @id @default(cuid())
+  inviterCustomerId   Int
+  referredCustomerId  Int      @unique
+  referralCodeUsed    String
+  status              String   @default("pending") // pending | trial_credited | phase1_credited | phase2_credited
+  linkedAt            DateTime @default(now())
+  createdAt           DateTime @default(now())
+  trialCreditedAt     DateTime?
+  phase1CreditedAt    DateTime?
+  phase2CreditedAt    DateTime?
+
+  inviter  GamificationIdentity @relation("ReferralsMade", fields: [inviterCustomerId], references: [customerId])
+  referred GamificationIdentity @relation("ReferralReceived", fields: [referredCustomerId], references: [customerId])
+
+  @@index([inviterCustomerId])
+  @@index([status])
 }

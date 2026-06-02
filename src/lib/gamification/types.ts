@@ -29,7 +29,10 @@ export type EventType =
   | "retroactive_replay"
   // Phase 2 event types
   | "music_choice_accepted"
-  | "weekly_challenge_won";
+  | "weekly_challenge_won"
+  | "referral_trial_only"
+  | "referral_phase_1"
+  | "referral_phase_2";
 
 /** Source of the event — who/what triggered it. */
 export type EventSource = "system" | "bot" | "admin" | "cron" | "retroactive_replay";
