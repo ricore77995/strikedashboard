@@ -21,9 +21,11 @@ interface Stats {
   challenge: {
     key: string;
     name: string;
+    points: number;
     status: string;
     windowStart: string;
     windowEnd: string;
+    winners: { customerId: number; rank: number; points: number }[];
   } | null;
 }
 

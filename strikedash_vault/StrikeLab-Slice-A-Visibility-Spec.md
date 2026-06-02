@@ -1,3 +1,6 @@
+---
+status: shipped
+---
 # StrikeLab Slice A — Visibility Spec
 
 **Date:** 2026-06-02 · **Status:** Spec-locked

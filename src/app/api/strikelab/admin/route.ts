@@ -53,6 +53,18 @@ export async function GET(req: NextRequest) {
 
   const challengeDef = challengeRun ? getChallenge(challengeRun.challengeKey) : null;
 
+  // Query winners for resolved challenges (payloadJson contains the isoWeek string)
+  const winnerEvents = challengeRun?.status === "resolved"
+    ? await db.gamificationEventLog.findMany({
+        where: {
+          eventType: "weekly_challenge_won",
+          payloadJson: { contains: isoWeek },
+        },
+        orderBy: { createdAt: "asc" },
+        select: { customerId: true, pointsDelta: true, payloadJson: true },
+      })
+    : [];
+
   return NextResponse.json({
     students: identities.map((i) => ({
       customerId: i.customerId,
@@ -84,9 +96,18 @@ export async function GET(req: NextRequest) {
         ? {
             key: challengeRun!.challengeKey,
             name: challengeDef.name,
+            points: challengeDef.points,
             status: challengeRun!.status,
             windowStart: challengeRun!.windowStart.toISOString(),
             windowEnd: challengeRun!.windowEnd.toISOString(),
+            winners: winnerEvents.map((w) => {
+              const payload = typeof w.payloadJson === "string" ? JSON.parse(w.payloadJson) : w.payloadJson;
+              return {
+                customerId: w.customerId,
+                rank: (payload?.rank as number) ?? 0,
+                points: w.pointsDelta,
+              };
+            }),
           }
         : null,
     },

@@ -8,6 +8,14 @@ import { Leaderboard, type LeaderboardEntry } from "./leaderboard";
 interface MeData {
   customerId: number;
   leaderboard: LeaderboardEntry[];
+  challenge: {
+    name: string;
+    points: number;
+    status: string;
+    windowStart: string;
+    windowEnd: string;
+    won: boolean;
+  } | null;
   state: {
     monthlyPoints: number;
     lifetimeXp: number;
@@ -119,6 +127,42 @@ export function MeClient() {
           color="text-cyan-400"
         />
       </div>
+
+      {/* Challenge card */}
+      {data.challenge ? (
+        <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg">🏆</span>
+            <span className="text-white font-medium text-sm">Desafio da semana</span>
+          </div>
+          <div className="text-amber-400 text-base font-bold">{data.challenge.name}</div>
+          <div className="text-zinc-500 text-xs mt-0.5">
+            +{data.challenge.points} pts · {data.challenge.status === "active" ? "A decorrer" : "Concluído"}
+          </div>
+          {data.challenge.status === "resolved" && (
+            <div className="mt-3 pt-2 border-t border-zinc-800">
+              {data.challenge.won ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏆</span>
+                  <span className="text-emerald-400 font-bold text-sm">Venceste!</span>
+                </div>
+              ) : (
+                <div className="text-zinc-500 text-xs">Não venceste desta vez. Na próxima!</div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mt-6 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-600 text-lg">🏆</span>
+            <div>
+              <div className="text-zinc-500 text-sm">Sem desafio esta semana</div>
+              <div className="text-zinc-600 text-xs">Novos desafios às quartas ao meio-dia</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Leaderboard */}
       <h2 className="text-sm font-medium text-zinc-400 mt-8 mb-2">Classificação do mês 🏆</h2>

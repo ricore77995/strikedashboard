@@ -5,6 +5,8 @@ import { parseEventPayload } from "@/lib/gamification/event-view";
 import { verifyStudentToken } from "@/lib/gamification/student-link";
 import { getMonthlyLeaderboard, formatLeaderName } from "@/lib/gamification/leaderboard";
 import { getCustomersByIds } from "@/lib/yogo/lookup";
+import { challengeWindow } from "@/lib/gamification/challenges/window";
+import { getChallenge } from "@/lib/gamification/challenges/catalog";
 
 /**
  * GET /api/strikelab/me?t=<token>
@@ -28,13 +30,19 @@ export async function GET(req: NextRequest) {
 
   const customerId = result.customerId;
 
-  const [identity, state, events] = await Promise.all([
+  const { isoWeek } = challengeWindow(new Date());
+
+  const [identity, state, events, challengeRun, myWinEvent] = await Promise.all([
     db.gamificationIdentity.findUnique({ where: { customerId } }),
     db.gamificationState.findUnique({ where: { customerId } }),
     db.gamificationEventLog.findMany({
       where: { customerId },
       orderBy: { createdAt: "desc" },
       take: 20,
+    }),
+    db.strikelabChallengeRun.findUnique({ where: { isoWeek } }),
+    db.gamificationEventLog.findFirst({
+      where: { customerId, eventType: "weekly_challenge_won", payloadJson: { contains: isoWeek } },
     }),
   ]);
 
@@ -61,9 +69,21 @@ export async function GET(req: NextRequest) {
     isViewer: b.isViewer,
   }));
 
+  const challengeDef = challengeRun ? getChallenge(challengeRun.challengeKey) : null;
+
   return NextResponse.json({
     customerId,
     leaderboard,
+    challenge: challengeDef
+      ? {
+          name: challengeDef.name,
+          points: challengeDef.points,
+          status: challengeRun!.status,
+          windowStart: challengeRun!.windowStart.toISOString(),
+          windowEnd: challengeRun!.windowEnd.toISOString(),
+          won: !!myWinEvent,
+        }
+      : null,
     state: {
       monthlyPoints: state?.monthlyPoints ?? 0,
       lifetimeXp,

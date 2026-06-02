@@ -7,9 +7,11 @@ interface Stats {
   challenge: {
     key: string;
     name: string;
+    points: number;
     status: string;
     windowStart: string;
     windowEnd: string;
+    winners: { customerId: number; rank: number; points: number }[];
   } | null;
 }
 
@@ -45,6 +47,7 @@ export function StrikeLabStats({ stats }: StrikeLabStatsProps) {
             <div className="flex items-center gap-2">
               <span className="text-amber-400 text-sm">🏆</span>
               <span className="text-white text-sm font-medium">{stats.challenge.name}</span>
+              <span className="text-zinc-600 text-xs">+{stats.challenge.points} pts</span>
               {stats.challenge.status === "resolved" && (
                 <span className="text-xs text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">Resolvido</span>
               )}
@@ -54,6 +57,26 @@ export function StrikeLabStats({ stats }: StrikeLabStatsProps) {
                 ? "Desafio activo esta semana"
                 : "Desafio desta semana resolvido"}
             </div>
+
+            {/* Winners list */}
+            {stats.challenge.winners.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-zinc-800">
+                <div className="text-zinc-500 text-xs mb-1.5">Vencedores</div>
+                <div className="space-y-1">
+                  {stats.challenge.winners.map((w) => (
+                    <div key={w.customerId} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-amber-400">
+                          {w.rank === 1 ? "🥇" : w.rank === 2 ? "🥈" : w.rank === 3 ? "🥉" : `#${w.rank}`}
+                        </span>
+                        <span className="text-zinc-300">#{w.customerId}</span>
+                      </div>
+                      <span className="text-emerald-400">+{w.points}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <>
