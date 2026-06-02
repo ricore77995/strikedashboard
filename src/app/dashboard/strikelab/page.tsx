@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { StrikeLabStats } from "./strikelab-stats";
 
 interface Student {
   customerId: number;
@@ -13,11 +14,25 @@ interface Student {
   state: { monthlyPoints: number; lifetimeXp: number; currentTier: string; currentStreakDays: number } | null;
 }
 
+interface Stats {
+  optedIn: number;
+  totalPointsThisMonth: number;
+  activeThisWeek: number;
+  challenge: {
+    key: string;
+    name: string;
+    status: string;
+    windowStart: string;
+    windowEnd: string;
+  } | null;
+}
+
 interface ApiResponse {
   students: Student[];
   total: number;
   page: number;
   pages: number;
+  stats: Stats;
 }
 
 export default function StrikeLabStudentsPage() {
@@ -54,6 +69,9 @@ export default function StrikeLabStudentsPage() {
         <h1 className="text-lg font-bold text-white">StrikeLab</h1>
         <span className="text-xs text-zinc-500">{data?.total ?? 0} alunos</span>
       </div>
+
+      {/* Stats overview */}
+      {data?.stats && <StrikeLabStats stats={data.stats} />}
 
       {/* Search */}
       <div className="mb-4">

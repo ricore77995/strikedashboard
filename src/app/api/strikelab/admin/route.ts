@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { challengeWindow } from "@/lib/gamification/challenges/window";
+import { getChallenge } from "@/lib/gamification/challenges/catalog";
 
 /**
  * GET /api/strikelab/admin?search=...&page=1
  *
- * Admin-only. Lists gamification identities with their state.
+ * Admin-only. Lists gamification identities with their state + aggregate stats.
  * Search filters by customerId, phone, or email.
  */
 export async function GET(req: NextRequest) {
@@ -30,7 +32,11 @@ export async function GET(req: NextRequest) {
       }
     : { erasedAt: null };
 
-  const [identities, total] = await Promise.all([
+  // Aggregate stats + challenge + paginated list — all in parallel
+  const { isoWeek, windowStart } = challengeWindow(new Date());
+  const optedInWhere = { optInAt: { not: null }, consentTraining: true, erasedAt: null };
+
+  const [identities, total, optedIn, pointsAgg, activeThisWeek, challengeRun] = await Promise.all([
     db.gamificationIdentity.findMany({
       where,
       orderBy: { optInAt: "desc" },
@@ -39,7 +45,13 @@ export async function GET(req: NextRequest) {
       include: { state: true },
     }),
     db.gamificationIdentity.count({ where }),
+    db.gamificationIdentity.count({ where: optedInWhere }),
+    db.gamificationState.aggregate({ _sum: { monthlyPoints: true } }),
+    db.gamificationState.count({ where: { lastClassAt: { gte: windowStart } } }),
+    db.strikelabChallengeRun.findUnique({ where: { isoWeek } }),
   ]);
+
+  const challengeDef = challengeRun ? getChallenge(challengeRun.challengeKey) : null;
 
   return NextResponse.json({
     students: identities.map((i) => ({
@@ -64,5 +76,19 @@ export async function GET(req: NextRequest) {
     total,
     page,
     pages: Math.ceil(total / limit),
+    stats: {
+      optedIn,
+      totalPointsThisMonth: pointsAgg._sum.monthlyPoints ?? 0,
+      activeThisWeek,
+      challenge: challengeDef
+        ? {
+            key: challengeRun!.challengeKey,
+            name: challengeDef.name,
+            status: challengeRun!.status,
+            windowStart: challengeRun!.windowStart.toISOString(),
+            windowEnd: challengeRun!.windowEnd.toISOString(),
+          }
+        : null,
+    },
   });
 }

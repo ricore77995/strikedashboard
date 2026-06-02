@@ -10,25 +10,28 @@ interface Section {
   sub: string;
   icon: string;
   href: string;
+  adminOnly?: boolean;
 }
 
 const SECTIONS: Section[] = [
-  { id: "subs",     label: "Subscrições",          sub: "Membros activos e planos",           icon: "👥", href: "/dashboard/subscribers" },
-  { id: "revenue",  label: "Faturação",            sub: "Receita e histórico de pagamentos",  icon: "⚡", href: "/dashboard/revenue" },
-  { id: "pts",      label: "PTs",                  sub: "Personal trainers e sessões",        icon: "👤", href: "/dashboard/pts" },
-  { id: "churn",    label: "Churn",                sub: "Membros em risco de cancelamento",   icon: "📉", href: "/dashboard/churn" },
-  { id: "failed",   label: "Pagamentos falhados",  sub: "Cartões recusados ou expirados",     icon: "💳", href: "/dashboard/failed" },
+  { id: "subs",     label: "Subscrições",          sub: "Membros activos e planos",           icon: "👥", href: "/dashboard/subscribers", adminOnly: true },
+  { id: "revenue",  label: "Faturação",            sub: "Receita e histórico de pagamentos",  icon: "⚡", href: "/dashboard/revenue", adminOnly: true },
+  { id: "pts",      label: "PTs",                  sub: "Personal trainers e sessões",        icon: "👤", href: "/dashboard/pts", adminOnly: true },
+  { id: "churn",    label: "Churn",                sub: "Membros em risco de cancelamento",   icon: "📉", href: "/dashboard/churn", adminOnly: true },
+  { id: "failed",   label: "Pagamentos falhados",  sub: "Cartões recusados ou expirados",     icon: "💳", href: "/dashboard/failed", adminOnly: true },
   { id: "classes",  label: "Visitantes",           sub: "USC, ClassPass, Bruce App",          icon: "✨", href: "/dashboard/classes" },
   { id: "leads",    label: "Leads",                sub: "Interessados que se cadastraram",    icon: "🎯", href: "/dashboard/leads" },
-  { id: "receber",  label: "A Receber",            sub: "Calendário de vencimentos mensais",  icon: "📅", href: "/dashboard/a-receber" },
-  { id: "saude",    label: "Saúde dos Clientes",   sub: "Inadimplentes, pausados, churn, PT migrar", icon: "🩺", href: "/dashboard/saude-clientes" },
-  { id: "wa",       label: "WhatsApp bot",         sub: "Saúde do bot, eventos e sessões activas",   icon: "💬", href: "/dashboard/wa" },
+  { id: "receber",  label: "A Receber",            sub: "Calendário de vencimentos mensais",  icon: "📅", href: "/dashboard/a-receber", adminOnly: true },
+  { id: "saude",    label: "Saúde dos Clientes",   sub: "Inadimplentes, pausados, churn, PT migrar", icon: "🩺", href: "/dashboard/saude-clientes", adminOnly: true },
+  { id: "wa",       label: "WhatsApp bot",         sub: "Saúde do bot, eventos e sessões activas",   icon: "💬", href: "/dashboard/wa", adminOnly: true },
+  { id: "strikelab", label: "StrikeLab",           sub: "Gamificação, pontos e desafios",     icon: "🏆", href: "/dashboard/strikelab", adminOnly: true },
 ];
 
 export default function MorePage() {
   const router = useRouter();
   const { role, logout } = useAuth();
   const isAdmin = role === "admin";
+  const visibleSections = isAdmin ? SECTIONS : SECTIONS.filter((s) => !s.adminOnly);
 
   return (
     <div style={{ paddingBottom: 32 }}>
@@ -36,7 +39,7 @@ export default function MorePage() {
       <div style={{ padding: "4px 18px 10px" }}>
         <h3 className="head" style={{ margin: "14px 0 10px", fontSize: 18, color: "#fff" }}>Outras secções</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {SECTIONS.map((s) => (
+          {visibleSections.map((s) => (
             <div
               key={s.id}
               onClick={() => router.push(s.href)}
