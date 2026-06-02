@@ -69,7 +69,10 @@ export default function StrikeLabStudentsPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold text-white">StrikeLab</h1>
-        <span className="text-xs text-zinc-500">{data?.total ?? 0} alunos</span>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/strikelab/logs" className="text-xs text-zinc-500 hover:text-emerald-400">Painel de controlo →</Link>
+          <span className="text-xs text-zinc-500">{data?.total ?? 0} alunos</span>
+        </div>
       </div>
 
       {/* Stats overview */}
