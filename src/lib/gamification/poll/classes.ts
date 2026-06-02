@@ -128,11 +128,13 @@ export async function pollClasses(): Promise<PollResult> {
     `classes?startDate=${today}&endDate=${today}&populate[]=signups.user&populate[]=class_type`,
   );
 
-  if (!response.ok || !Array.isArray(response.data)) {
+  if (!response.ok) {
     throw new Error(`Yogo classes fetch failed: ${response.status}`);
   }
 
-  const classes = response.data;
+  // Yogo /classes returns { classes: [...] } not a raw array
+  const raw = response.data;
+  const classes = Array.isArray(raw) ? raw : Array.isArray((raw as { classes?: unknown })?.classes) ? (raw as { classes: YogoClass[] }).classes : [];
   result.classesProcessed = classes.length;
 
   for (const cls of classes) {
