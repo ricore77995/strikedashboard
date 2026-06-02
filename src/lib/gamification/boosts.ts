@@ -79,5 +79,19 @@ export async function getActiveBoostsForCheckin(
     boosts.push({ id: "supera_ritmo", multiplier: 1.2 });
   }
 
+  // Embaixador referral boost: referral_phase_1 event within last 14 days
+  // Boolean check — findFirst, not findMany. One boost max regardless of referral count.
+  const recentReferralPhase1 = await db.gamificationEventLog.findFirst({
+    where: {
+      customerId,
+      eventType: "referral_phase_1",
+      createdAt: { gte: fourteenDaysAgo },
+    },
+    select: { eventId: true },
+  });
+  if (recentReferralPhase1) {
+    boosts.push({ id: "embaixador_referral", multiplier: 1.4 });
+  }
+
   return boosts;
 }

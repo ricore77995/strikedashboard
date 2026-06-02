@@ -5,6 +5,7 @@ import { appendEvent } from "@/lib/gamification/event-log";
 import { isNonActionableLead } from "@/lib/yogo/non-actionable-lead";
 import { getTodayISO, getCurrentPeriod } from "./shared";
 import { RENEWAL_BONUS } from "@/lib/gamification/constants";
+import { tryReferralPhase1, tryReferralPhase2 } from "@/lib/gamification/referral";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -208,6 +209,12 @@ export async function pollMemberships(): Promise<MembershipPollResult> {
         if (ev.eventType === "subscription_renewed") result.renewed++;
         if (ev.eventType === "subscription_cancelled") result.cancelled++;
         if (ev.eventType === "dunning_detected") result.dunningDetected++;
+
+        // Referral hooks (Phase 2)
+        if (ev.eventType === "subscription_renewed") {
+          await tryReferralPhase1(row.user_id);
+          await tryReferralPhase2(row.user_id);
+        }
       }
     }
 

@@ -13,10 +13,45 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+// ─── Referral code ──────────────────────────────────────────────────────
+
+/** Characters for referral codes — uppercase, no ambiguous 0/O/1/I/l. */
+const REFERRAL_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // 28 chars
+
+/** Generate a random 6-char referral code. ~481M combinations. */
+function generateReferralCode(): string {
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += REFERRAL_CHARS[Math.floor(Math.random() * REFERRAL_CHARS.length)];
+  }
+  return code;
+}
+
+/**
+ * Generate a unique referral code, retrying once on collision.
+ * At <500 students, collision probability is negligible.
+ */
+async function generateUniqueReferralCode(): Promise<string> {
+  const code = generateReferralCode();
+  try {
+    // Verify uniqueness — if taken, retry once
+    const existing = await db.gamificationIdentity.findUnique({
+      where: { referralCode: code },
+    });
+    if (existing) {
+      return generateReferralCode(); // single retry
+    }
+    return code;
+  } catch {
+    return code; // DB error → use it, P2002 catch on upsert is the safety net
+  }
+}
+
 // ─── Upsert ──────────────────────────────────────────────────────────
 
 /** Create or update an identity row. Returns the upserted row. */
 export async function upsertIdentity(input: IdentityInput) {
+  const referralCode = await generateUniqueReferralCode();
   return db.gamificationIdentity.upsert({
     where: { customerId: input.customerId },
     update: {
@@ -29,6 +64,7 @@ export async function upsertIdentity(input: IdentityInput) {
       phoneE164: input.phoneE164,
       email: input.email ? normalizeEmail(input.email) : null,
       whatsappWaId: input.whatsappWaId ?? null,
+      referralCode,
     },
   });
 }
@@ -51,6 +87,10 @@ export async function findByWaId(whatsappWaId: string) {
 
 export async function findByCustomerId(customerId: number) {
   return db.gamificationIdentity.findUnique({ where: { customerId } });
+}
+
+export async function findByReferralCode(referralCode: string) {
+  return db.gamificationIdentity.findUnique({ where: { referralCode } });
 }
 
 // ─── IG verification ─────────────────────────────────────────────────

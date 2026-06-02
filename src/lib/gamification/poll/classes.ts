@@ -15,6 +15,7 @@ import { checkPerfectWeek } from "@/lib/gamification/perfect-week";
 import { checkComeback } from "@/lib/gamification/comeback";
 import { checkSuperaRitmo } from "@/lib/gamification/supera-ritmo";
 import { checkMusicChoice } from "@/lib/gamification/music-choice";
+import { tryReferralTrial, tryReferralPhase2 } from "@/lib/gamification/referral";
 import type { PlanCategory } from "@/lib/gamification/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -239,6 +240,10 @@ export async function pollClasses(): Promise<PollResult> {
           await checkComeback(customerId);
           await checkSuperaRitmo(customerId, planCategory);
           await checkMusicChoice(customerId, identity.phoneE164, cls.id);
+
+          // Referral hooks (Phase 2)
+          await tryReferralTrial(customerId);
+          await tryReferralPhase2(customerId);
         }
       }
     }
