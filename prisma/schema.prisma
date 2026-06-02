@@ -271,3 +271,17 @@ model StrikelabChallengeRun {
 
   @@index([status])
 }
+
+/// Execution log for every cron invocation. One row per run.
+model CronRunLog {
+  id         String   @id @default(cuid())
+  cronName   String   // e.g. "strikelab-poll-classes"
+  status     String   // "success" | "error" | "skipped"
+  message    String?  // result summary or error message
+  durationMs Int?
+  startedAt  DateTime
+  finishedAt DateTime @default(now())
+
+  @@index([cronName, startedAt(sort: Desc)])
+  @@index([startedAt(sort: Desc)])
+}

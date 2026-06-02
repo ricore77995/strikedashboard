@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pollClasses } from "@/lib/gamification/poll/classes";
 import { isWithinOpsHours } from "@/lib/gamification/poll/shared";
+import { withCronLog } from "@/lib/cron-log";
 
 /**
  * GET /api/cron/strikelab-poll-classes
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await pollClasses();
+    const result = await withCronLog("strikelab-poll-classes", () => pollClasses());
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pollMemberships } from "@/lib/gamification/poll/memberships";
+import { withCronLog } from "@/lib/cron-log";
 
 /**
  * GET /api/cron/strikelab-poll-memberships
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await pollMemberships();
+    const result = await withCronLog("strikelab-poll-memberships", () => pollMemberships());
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

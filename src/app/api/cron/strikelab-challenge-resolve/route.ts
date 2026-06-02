@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveWeeklyChallenge } from "@/lib/gamification/challenges/resolve";
+import { withCronLog } from "@/lib/cron-log";
 
 /**
  * GET /api/cron/strikelab-challenge-resolve
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ skipped: true, reason: "STRIKELAB_ENABLED not set" });
   }
   try {
-    const result = await resolveWeeklyChallenge();
+    const result = await withCronLog("strikelab-challenge-resolve", () => resolveWeeklyChallenge());
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

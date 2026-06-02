@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { performMonthlyReset } from "@/lib/gamification/reset";
+import { withCronLog } from "@/lib/cron-log";
 
 /**
  * GET /api/cron/strikelab-monthly-reset
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await performMonthlyReset();
+    const result = await withCronLog("strikelab-monthly-reset", () => performMonthlyReset());
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

@@ -7,6 +7,7 @@ import { isoLisbonDate, lisbonHour } from "@/lib/wa/lisbon";
 import { normalize } from "@/lib/phone";
 import { isNonActionableLead, parseReport } from "@/lib/utils";
 import { TRIAL_CLASS_TYPE_ID } from "@/lib/constants";
+import { withCronLog } from "@/lib/cron-log";
 
 const TARGET_LISBON_HOUR = 11;
 const LANGUAGE_CODE = "pt_PT";
@@ -32,7 +33,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ skipped: "wrong_hour", lisbonHour: hour });
   }
 
-  const dateKey = isoLisbonDate(yesterday()); // e.g. "2026-05-25"
+  const result = await withCronLog("trial-followup", async () => {
+    const dateKey = isoLisbonDate(yesterday()); // e.g. "2026-05-25"
   const attendees = await fetchYesterdayTrialAttendees(dateKey);
   const eligible = attendees.filter((c) => !isNonActionableLead({ email: c.email }));
 
@@ -55,7 +57,10 @@ export async function GET(req: NextRequest) {
     else stats.failed++;
   }
 
-  return NextResponse.json({ ranAt: new Date().toISOString(), dateKey, ...stats });
+    return { ranAt: new Date().toISOString(), dateKey, ...stats };
+  });
+
+  return NextResponse.json(result);
 }
 
 type SendOutcome = "sent" | "duplicate" | "pending" | "failed";

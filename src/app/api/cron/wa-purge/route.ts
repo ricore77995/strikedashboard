@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCronLog } from "@/lib/cron-log";
 
 const RETENTION_DAYS = 90;
 
@@ -13,8 +14,11 @@ export async function GET(req: NextRequest) {
   const header = req.headers.get("authorization") ?? "";
   if (header !== `Bearer ${expected}`) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
-  const result = await db.waInbound.deleteMany({ where: { receivedAt: { lt: cutoff } } });
+  const result = await withCronLog("wa-purge", async () => {
+    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const res = await db.waInbound.deleteMany({ where: { receivedAt: { lt: cutoff } } });
+    return { deleted: res.count, cutoff: cutoff.toISOString() };
+  });
 
-  return NextResponse.json({ deleted: result.count, cutoff: cutoff.toISOString() });
+  return NextResponse.json(result);
 }

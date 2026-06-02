@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { performRetroactiveReplay } from "@/lib/gamification/retroactive-replay";
+import { withCronLog } from "@/lib/cron-log";
 
 /**
  * GET /api/cron/strikelab-retroactive-replay
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await performRetroactiveReplay();
+    const result = await withCronLog("strikelab-retroactive-replay", () => performRetroactiveReplay());
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
