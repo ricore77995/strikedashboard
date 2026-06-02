@@ -28,6 +28,13 @@ interface CronRow {
   finishedAt: string;
 }
 
+interface ScheduleEntry {
+  cronName: string;
+  schedule: string;
+  label: string;
+  lastRun: { status: string; startedAt: string; durationMs: number | null } | null;
+}
+
 interface ChallengeRow {
   id: string;
   challengeKey: string;
@@ -43,6 +50,7 @@ export default function StrikeLabLogsPage() {
   const [tab, setTab] = useState<Tab>("events");
   const [events, setEvents] = useState<EventRow[]>([]);
   const [cronRuns, setCronRuns] = useState<CronRow[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [challenges, setChallenges] = useState<ChallengeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -59,6 +67,7 @@ export default function StrikeLabLogsPage() {
         setTotal(data.total ?? 0);
       } else if (tab === "cron") {
         setCronRuns(data.runs ?? []);
+        setSchedule(data.schedule ?? []);
         setTotal(data.total ?? 0);
       } else {
         setChallenges(data.runs ?? []);
@@ -114,7 +123,18 @@ export default function StrikeLabLogsPage() {
       ) : (
         <>
           {tab === "events" && <EventsTable events={events} fmt={fmt} />}
-          {tab === "cron" && <CronTable runs={cronRuns} fmt={fmt} />}
+          {tab === "cron" && (
+            <>
+              {/* Schedule overview */}
+              <ScheduleOverview schedule={schedule} fmt={fmt} />
+              {cronRuns.length > 0 && (
+                <>
+                  <h3 className="text-sm font-medium text-zinc-400 mt-6 mb-2">Histórico de execuções</h3>
+                  <CronTable runs={cronRuns} fmt={fmt} />
+                </>
+              )}
+            </>
+          )}
           {tab === "challenges" && <ChallengeTable runs={challenges} fmt={fmt} />}
 
           {/* Pagination */}
@@ -217,6 +237,41 @@ function ChallengeTable({ runs, fmt }: { runs: ChallengeRow[]; fmt: (d: string) 
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ScheduleOverview({ schedule, fmt }: { schedule: ScheduleEntry[]; fmt: (d: string) => string }) {
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-zinc-400 mb-2">Agendados</h3>
+      <div className="space-y-1.5">
+        {schedule.map((s) => (
+          <div key={s.cronName} className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm text-white font-mono">{s.cronName}</div>
+              <div className="text-[11px] text-zinc-500">{s.label}</div>
+            </div>
+            <div className="text-right shrink-0">
+              {s.lastRun ? (
+                <>
+                  <span className={`text-xs font-medium ${s.lastRun.status === "success" ? "text-emerald-400" : s.lastRun.status === "error" ? "text-red-400" : "text-amber-400"}`}>
+                    {s.lastRun.status === "success" ? "✓" : s.lastRun.status === "error" ? "✗" : "⊘"}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 ml-1">
+                    {fmt(s.lastRun.startedAt)}
+                  </span>
+                  {s.lastRun.durationMs != null && (
+                    <span className="text-[10px] text-zinc-600 ml-1">{s.lastRun.durationMs}ms</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-[11px] text-zinc-600">Aguardando</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

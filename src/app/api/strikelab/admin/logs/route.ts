@@ -69,6 +69,27 @@ export async function GET(req: NextRequest) {
       db.cronRunLog.count({ where }),
     ]);
 
+    // Schedule overview: all configured crons with last run
+    const SCHEDULED = [
+      { cronName: "strikelab-poll-classes", schedule: "0 5 * * *", label: "Diário 05:00 UTC" },
+      { cronName: "strikelab-poll-memberships", schedule: "0 2 * * *", label: "Diário 02:00 UTC" },
+      { cronName: "strikelab-challenge-launch", schedule: "0 11 * * 3", label: "Quarta 11:00 UTC" },
+      { cronName: "strikelab-challenge-resolve", schedule: "0 5 * * 1", label: "Segunda 05:00 UTC" },
+      { cronName: "strikelab-monthly-reset", schedule: "0 0 1 * *", label: "Mensal (dia 1)" },
+      { cronName: "trial-followup", schedule: "0 10,11 * * *", label: "Diário 10+11 UTC" },
+      { cronName: "wa-purge", schedule: "0 3 * * *", label: "Diário 03:00 UTC" },
+      { cronName: "spotify-playlists", schedule: "0 4 * * *", label: "Diário 04:00 UTC" },
+      { cronName: "spotify-playlist-lock", schedule: "0 23 * * *", label: "Diário 23:00 UTC" },
+    ] as const;
+
+    // Get last run for each scheduled cron
+    const lastRuns = await db.cronRunLog.findMany({
+      where: { cronName: { in: SCHEDULED.map((s) => s.cronName) } },
+      orderBy: { startedAt: "desc" },
+      distinct: ["cronName"],
+    });
+    const lastRunMap = new Map(lastRuns.map((r) => [r.cronName, { status: r.status, startedAt: r.startedAt.toISOString(), durationMs: r.durationMs }]));
+
     return NextResponse.json({
       runs: runs.map((r) => ({
         id: r.id,
@@ -78,6 +99,10 @@ export async function GET(req: NextRequest) {
         durationMs: r.durationMs,
         startedAt: r.startedAt,
         finishedAt: r.finishedAt,
+      })),
+      schedule: SCHEDULED.map((s) => ({
+        ...s,
+        lastRun: lastRunMap.get(s.cronName) ?? null,
       })),
       total,
       page,
