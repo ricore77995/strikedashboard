@@ -116,25 +116,30 @@ export default function StrikeLabLogsPage() {
       {/* Content */}
       {loading ? (
         <p className="text-zinc-500 text-sm text-center py-8">A carregar...</p>
+      ) : tab === "cron" ? (
+        /* Cron tab always shows schedule, even with 0 runs */
+        <>
+          {schedule.length > 0 ? (
+            <ScheduleOverview schedule={schedule} fmt={fmt} />
+          ) : (
+            <p className="text-zinc-500 text-sm text-center py-4">A carregar agendamentos...</p>
+          )}
+          {cronRuns.length > 0 ? (
+            <>
+              <h3 className="text-sm font-medium text-zinc-400 mt-6 mb-2">Histórico de execuções</h3>
+              <CronTable runs={cronRuns} fmt={fmt} />
+            </>
+          ) : (
+            <p className="text-zinc-600 text-xs text-center mt-6">Sem execuções registadas ainda.</p>
+          )}
+        </>
       ) : total === 0 ? (
         <p className="text-zinc-500 text-sm text-center py-8">
-          {tab === "events" ? "Sem eventos registados." : tab === "cron" ? "Sem execuções de cron." : "Sem desafios registados."}
+          {tab === "events" ? "Sem eventos registados." : "Sem desafios registados."}
         </p>
       ) : (
         <>
           {tab === "events" && <EventsTable events={events} fmt={fmt} />}
-          {tab === "cron" && (
-            <>
-              {/* Schedule overview */}
-              <ScheduleOverview schedule={schedule} fmt={fmt} />
-              {cronRuns.length > 0 && (
-                <>
-                  <h3 className="text-sm font-medium text-zinc-400 mt-6 mb-2">Histórico de execuções</h3>
-                  <CronTable runs={cronRuns} fmt={fmt} />
-                </>
-              )}
-            </>
-          )}
           {tab === "challenges" && <ChallengeTable runs={challenges} fmt={fmt} />}
 
           {/* Pagination */}
