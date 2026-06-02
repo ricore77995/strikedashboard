@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import type { Role } from "./constants";
 
-const COOKIE_NAME = "striker_session";
+export const COOKIE_NAME = "striker_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export function validatePassword(password: string): Role | null {

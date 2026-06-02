@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { challengeWindow } from "@/lib/gamification/challenges/window";
 import { getChallenge } from "@/lib/gamification/challenges/catalog";
+import { COOKIE_NAME } from "@/lib/auth";
 
 /**
  * GET /api/strikelab/admin?search=...&page=1
@@ -10,7 +11,7 @@ import { getChallenge } from "@/lib/gamification/challenges/catalog";
  * Search filters by customerId, phone, or email.
  */
 export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get("session");
+  const cookie = req.cookies.get(COOKIE_NAME);
   if (!cookie?.value) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { COOKIE_NAME } from "@/lib/auth";
 
 /**
  * GET /api/strikelab/admin/logs?type=events|cron|challenges&page=1
@@ -7,7 +8,7 @@ import { db } from "@/lib/db";
  * Admin-only. Returns gamification event logs, cron run logs, or challenge run history.
  */
 export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get("session");
+  const cookie = req.cookies.get(COOKIE_NAME);
   if (!cookie?.value) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
