@@ -27,7 +27,6 @@ import {
 } from "@/lib/wa/handlers/song-request";
 import {
   handleStrikelabOnboard,
-  handleStrikelabConsent,
   handleStrikelabParental,
   handleStrikelabMe,
   handleStrikelabReferral,
@@ -190,13 +189,6 @@ export async function dispatch(phoneE164: string, message: MetaInboundMessage): 
         renderFlowHint("Queres trocar a música anterior pela nova?", "replace_yes", "Sim, trocar"),
       );
       return;
-
-    case "STRIKELAB_AWAIT_CONSENT":
-      if (intent.kind === "button" && (intent.id === "strikelab_accept" || intent.id === "strikelab_decline")) {
-        return handleStrikelabConsent(session, intent.id);
-      }
-      await resetToIdle(session);
-      return sendMenu(phoneE164);
 
     case "STRIKELAB_AWAIT_PARENTAL":
       if (intent.kind === "text" && intent.body.trim().toLowerCase() === "strikelab") {

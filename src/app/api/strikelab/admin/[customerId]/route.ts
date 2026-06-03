@@ -46,7 +46,6 @@ export async function GET(
       igVerifiedAt: identity.igVerifiedAt,
       optInAt: identity.optInAt,
       optOutAt: identity.optOutAt,
-      consentTraining: identity.consentTraining,
       consentUgc: identity.consentUgc,
       consentRealName: identity.consentRealName,
       consentBroadcasts: identity.consentBroadcasts,

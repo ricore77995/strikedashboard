@@ -30,7 +30,7 @@ describe("Phase 0 acceptance — full happy path with classify gate", () => {
   beforeAll(cleanup);
   afterAll(cleanup);
 
-  it("1. Create identity with DOB filled", async () => {
+  it("1. Create identity with DOB filled — auto-opt-in", async () => {
     const identity = await upsertIdentity({
       customerId: CID,
       phoneE164: "+351999999999",
@@ -43,9 +43,14 @@ describe("Phase 0 acceptance — full happy path with classify gate", () => {
     });
 
     expect(identity.customerId).toBe(CID);
+    // Auto-opt-in: consent is set immediately
+    expect(identity.consentTraining).toBe(true);
+    expect(identity.optInAt).not.toBeNull();
   });
 
-  it("2. Capture consent (training=true)", async () => {
+  it("2. Consent already applied (auto-opt-in)", async () => {
+    // upsertIdentity sets consentTraining=true automatically
+    // applyConsent(training=true) is a no-op (already true)
     const result = await applyConsent(CID, {
       training: true,
       ugc: false,
@@ -53,7 +58,8 @@ describe("Phase 0 acceptance — full happy path with classify gate", () => {
       broadcasts: false,
     });
 
-    expect(result.changed).toContain("training");
+    // No change since already consented
+    expect(result.changed).toEqual([]);
 
     const identity = await db.gamificationIdentity.findUnique({ where: { customerId: CID } });
     expect(identity?.consentTraining).toBe(true);

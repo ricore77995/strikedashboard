@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { db } from "@/lib/db";
 import { checkCreditGates } from "@/lib/gamification/gates";
-import { applyConsent } from "@/lib/gamification/consent";
 import { getCurrentPeriod, getTodayISO } from "@/lib/gamification/poll/shared";
 
 const CID = 91001;
@@ -18,11 +17,10 @@ async function cleanup() {
 describe("checkCreditGates", () => {
   beforeAll(async () => {
     await cleanup();
-    // Create identity with consent
+    // Create identity — auto-opt-in via upsert
     await db.gamificationIdentity.create({
-      data: { customerId: CID, phoneE164: PHONE, email: EMAIL },
+      data: { customerId: CID, phoneE164: PHONE, email: EMAIL, consentTraining: true, optInAt: new Date() },
     });
-    await applyConsent(CID, { training: true, ugc: false, realName: false, broadcasts: false });
 
     // Create an active membership snapshot
     await db.yogoMembershipSnapshot.create({
@@ -70,19 +68,7 @@ describe("checkCreditGates", () => {
     });
   });
 
-  it("fails gate 2 — not opted in", async () => {
-    // Remove consent
-    await applyConsent(CID, { training: false, ugc: false, realName: false, broadcasts: false });
-
-    const result = await checkCreditGates(CID);
-    expect(result.passed).toBe(false);
-    expect(result.reason).toBe("not_opted_in");
-
-    // Restore consent
-    await applyConsent(CID, { training: true, ugc: false, realName: false, broadcasts: false });
-  });
-
-  it("fails gate 4 — dunning membership", async () => {
+  it("fails gate 2 — dunning membership", async () => {
     // Update snapshot to dunning
     await db.yogoMembershipSnapshot.updateMany({
       where: { userId: CID },

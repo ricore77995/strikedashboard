@@ -32,7 +32,6 @@ const {
   handleSongConfirmMock,
   handleSwapConfirmMock,
   handleStrikelabOnboardMock,
-  handleStrikelabConsentMock,
   handleStrikelabParentalMock,
   dbWaEventCreateMock,
 } = vi.hoisted(() => ({
@@ -63,7 +62,6 @@ const {
   handleSongConfirmMock: vi.fn().mockResolvedValue(undefined),
   handleSwapConfirmMock: vi.fn().mockResolvedValue(undefined),
   handleStrikelabOnboardMock: vi.fn().mockResolvedValue(undefined),
-  handleStrikelabConsentMock: vi.fn().mockResolvedValue(undefined),
   handleStrikelabParentalMock: vi.fn().mockResolvedValue(undefined),
   dbWaEventCreateMock: vi.fn().mockResolvedValue(undefined),
 }));
@@ -134,7 +132,6 @@ vi.mock("@/lib/wa/handlers/song-request", () => ({
 
 vi.mock("@/lib/wa/handlers/strikelab-onboard", () => ({
   handleStrikelabOnboard: handleStrikelabOnboardMock,
-  handleStrikelabConsent: handleStrikelabConsentMock,
   handleStrikelabParental: handleStrikelabParentalMock,
 }));
 
@@ -598,27 +595,6 @@ describe("dispatch", () => {
   // -----------------------------------------------------------------------
   // STRIKELAB states
   // -----------------------------------------------------------------------
-  describe("STRIKELAB_AWAIT_CONSENT", () => {
-    const session = makeSession({ state: "STRIKELAB_AWAIT_CONSENT" });
-
-    it("button(strikelab_accept) calls handleStrikelabConsent", async () => {
-      loadSessionMock.mockResolvedValue(session);
-      parseIntentMock.mockReturnValue({ kind: "button", id: "strikelab_accept" });
-
-      await dispatch(PHONE, buttonMsg("strikelab_accept"));
-
-      expect(handleStrikelabConsentMock).toHaveBeenCalledWith(session, "strikelab_accept");
-    });
-
-    it("button(strikelab_decline) calls handleStrikelabConsent", async () => {
-      loadSessionMock.mockResolvedValue(session);
-      parseIntentMock.mockReturnValue({ kind: "button", id: "strikelab_decline" });
-
-      await dispatch(PHONE, buttonMsg("strikelab_decline"));
-
-      expect(handleStrikelabConsentMock).toHaveBeenCalledWith(session, "strikelab_decline");
-    });
-  });
 
   describe("STRIKELAB_AWAIT_PARENTAL", () => {
     const session = makeSession({ state: "STRIKELAB_AWAIT_PARENTAL" });

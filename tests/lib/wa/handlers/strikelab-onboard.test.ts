@@ -19,14 +19,13 @@ vi.mock("@/lib/yogo/fetch", () => ({
   yogoFetch: vi.fn(),
 }));
 
-import { handleStrikelabOnboard, handleStrikelabConsent, handleStrikelabReferral } from "@/lib/wa/handlers/strikelab-onboard";
+import { handleStrikelabOnboard, handleStrikelabReferral } from "@/lib/wa/handlers/strikelab-onboard";
 import { findCustomerByPhone, getYogoUserDetail } from "@/lib/yogo/lookup";
-import { sendText, sendButton } from "@/lib/wa/meta";
+import { sendText } from "@/lib/wa/meta";
 
 const mockedFindCustomer = vi.mocked(findCustomerByPhone);
 const mockedGetUserDetail = vi.mocked(getYogoUserDetail);
 const mockedSendText = vi.mocked(sendText);
-const mockedSendButton = vi.mocked(sendButton);
 
 function makeSession(phone: string, state = "IDLE") {
   return {
@@ -163,7 +162,7 @@ describe("strikelab-onboard", () => {
       expect(identity?.birthYear).toBe(2012);
     });
 
-    it("sends consent buttons for adults (≥18)", async () => {
+    it("auto-opt-in for adults — asks referral code directly", async () => {
       await seedWaSession(PHONE_ADULT);
       mockedFindCustomer.mockResolvedValueOnce({
         id: CID_ADULT,
@@ -177,47 +176,18 @@ describe("strikelab-onboard", () => {
 
       await handleStrikelabOnboard(makeSession(PHONE_ADULT));
 
-      expect(mockedSendButton).toHaveBeenCalledWith(
+      // Should ask for referral code (not consent buttons)
+      expect(mockedSendText).toHaveBeenCalledWith(
         PHONE_ADULT,
-        expect.objectContaining({
-          type: "button",
-          bodyText: expect.stringContaining("StrikeLab"),
-          buttons: expect.arrayContaining([
-            expect.objectContaining({ id: "strikelab_accept" }),
-            expect.objectContaining({ id: "strikelab_decline" }),
-          ]),
-        }),
+        expect.stringContaining("código de indicação"),
       );
 
-      // Verify identity was created
+      // Verify identity was created with auto-opt-in
       const identity = await db.gamificationIdentity.findUnique({
         where: { customerId: CID_ADULT },
       });
       expect(identity).not.toBeNull();
       expect(identity?.birthYear).toBe(1995);
-    });
-  });
-
-  describe("handleStrikelabConsent", () => {
-    it("decline → resets to IDLE with polite message", async () => {
-      await seedWaSession(PHONE_ADULT);
-      await handleStrikelabConsent(makeSession(PHONE_ADULT), "strikelab_decline");
-
-      expect(mockedSendText).toHaveBeenCalledWith(
-        PHONE_ADULT,
-        expect.stringContaining("mudares de ideia"),
-      );
-    });
-
-    it("accept → applies consent + emits identity_created event + asks for referral code", async () => {
-      await seedWaSession(PHONE_ADULT);
-      // Identity should already exist from the adult test above
-      await handleStrikelabConsent(makeSession(PHONE_ADULT), "strikelab_accept");
-
-      // Verify consent was applied
-      const identity = await db.gamificationIdentity.findUnique({
-        where: { customerId: CID_ADULT },
-      });
       expect(identity?.consentTraining).toBe(true);
       expect(identity?.optInAt).not.toBeNull();
 
@@ -226,11 +196,21 @@ describe("strikelab-onboard", () => {
         where: { customerId: CID_ADULT, eventType: "identity_created" },
       });
       expect(event).not.toBeNull();
+    });
 
-      // Verify referral code question (not direct welcome anymore)
+    it("recognises already onboarded student", async () => {
+      await seedWaSession(PHONE_ADULT);
+      mockedFindCustomer.mockResolvedValueOnce({
+        id: CID_ADULT,
+        phone: PHONE_ADULT,
+        email: "adult@test.com",
+      });
+
+      await handleStrikelabOnboard(makeSession(PHONE_ADULT));
+
       expect(mockedSendText).toHaveBeenCalledWith(
         PHONE_ADULT,
-        expect.stringContaining("código de indicação"),
+        expect.stringContaining("Já estás inscrito"),
       );
     });
   });
@@ -245,6 +225,7 @@ describe("strikelab-onboard", () => {
           phoneE164: PHONE_INVITER,
           referralCode: TEST_REFERRAL_CODE,
           consentTraining: true,
+          optInAt: new Date(),
         },
         update: { referralCode: TEST_REFERRAL_CODE },
       });
@@ -277,13 +258,14 @@ describe("strikelab-onboard", () => {
     it("valid referral code → links referral + sends bonus message + welcome", async () => {
       await seedInviter();
       await seedWaSession(PHONE_ADULT);
-      // The adult identity must exist (consented)
+      // The adult identity must exist (auto-opted in)
       await db.gamificationIdentity.upsert({
         where: { customerId: CID_ADULT },
         create: {
           customerId: CID_ADULT,
           phoneE164: PHONE_ADULT,
           consentTraining: true,
+          optInAt: new Date(),
         },
         update: {},
       });
@@ -323,6 +305,7 @@ describe("strikelab-onboard", () => {
           customerId: CID_ADULT,
           phoneE164: PHONE_ADULT,
           consentTraining: true,
+          optInAt: new Date(),
         },
         update: {},
       });

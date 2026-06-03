@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
-import { sendText, sendButton } from "@/lib/wa/meta";
+import { sendText } from "@/lib/wa/meta";
 import { findCustomerByPhone, getYogoUserDetail } from "@/lib/yogo/lookup";
 import { upsertIdentity, findByCustomerId } from "@/lib/gamification/identity";
-import { applyConsent } from "@/lib/gamification/consent";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { resetToIdle, transition, type SessionRow } from "@/lib/wa/session";
 import { buildStudentLink } from "@/lib/gamification/student-link";
@@ -17,14 +16,14 @@ const WELCOME =
 /**
  * StrikeLab onboarding state machine.
  *
- * IDLE → "strikelab" → CHECK_DOB → consent flow → referral code → IDLE
+ * IDLE → "strikelab" → auto-opt-in → referral code question → IDLE
  *
- * DOB enforcement (P15):
+ * Consent is automatic (covered by gym T&Cs). DOB enforcement still applies:
  *   - No Yogo customer → "fala com o Marcelo"
  *   - DOB null in Yogo → refuse, ask to update in Yogo
  *   - DOB < 13yr → excluded
  *   - DOB 13-17 → parental consent required
- *   - DOB ≥ 18 → normal 4-toggle consent
+ *   - DOB ≥ 18 → auto-opt-in + referral question
  */
 
 const MIN_AGE = 13;
@@ -55,9 +54,9 @@ export async function handleStrikelabOnboard(session: SessionRow): Promise<void>
     return;
   }
 
-  // 2. Check if already onboarded
+  // 2. Check if already onboarded (identity exists)
   const existing = await findByCustomerId(customer.id);
-  if (existing?.optInAt && existing.consentTraining) {
+  if (existing && !existing.erasedAt) {
     await sendText(phone, "Já estás inscrito no StrikeLab! 💪 Vamos treinar.");
     return;
   }
@@ -84,7 +83,7 @@ export async function handleStrikelabOnboard(session: SessionRow): Promise<void>
     return;
   }
 
-  // 4. Create/update identity with DOB
+  // 4. Create/update identity — auto-opt-in (consent via T&Cs)
   const birthYear = new Date(dob).getFullYear();
   await upsertIdentity({
     customerId: customer.id,
@@ -96,6 +95,15 @@ export async function handleStrikelabOnboard(session: SessionRow): Promise<void>
   await db.gamificationIdentity.update({
     where: { customerId: customer.id },
     data: { birthYear },
+  });
+
+  // Emit identity_created event
+  await appendEvent({
+    customerId: customer.id,
+    eventType: "identity_created",
+    payloadJson: { source: "bot_onboarding", phone },
+    source: "bot",
+    idempotencyKey: `identity_created:${customer.id}`,
   });
 
   if (age < ADULT_AGE) {
@@ -111,23 +119,19 @@ export async function handleStrikelabOnboard(session: SessionRow): Promise<void>
     return;
   }
 
-  // 5b. Adult → consent flow
-  const res = await transition(session, { state: "STRIKELAB_AWAIT_CONSENT" });
-  if (!res.ok) return;
+  // 5b. Adult → ask for referral code
+  const res = await transition(session, { state: "STRIKELAB_AWAIT_REFERRAL" });
+  if (!res.ok) {
+    await resetToIdle(session);
+    await sendText(phone, WELCOME);
+    return;
+  }
 
-  await sendButton(phone, {
-    type: "button",
-    bodyText:
-      "🏆 StrikeLab — Programa de Gamificação\n\n" +
-      "Vais ganhar pontos por cada treino, subir de nível e ganhar prémios!\n\n" +
-      "Para participar, preciso da tua autorização para:\n" +
-      "• Usar os teus dados de treino (presenças, pontuação)\n\n" +
-      "Aceitas participar?",
-    buttons: [
-      { id: "strikelab_accept", title: "Sim, quero participar!" },
-      { id: "strikelab_decline", title: "Não, obrigado" },
-    ],
-  });
+  await sendText(
+    phone,
+    "Tens um código de indicação de um amigo? 😊\n" +
+      "Responde com o código ou escreve 'não'.",
+  );
 }
 
 /**
@@ -142,7 +146,7 @@ export async function handleStrikelabMe(phoneE164: string): Promise<void> {
     where: { phoneE164 },
   });
 
-  if (!identity || !identity.optInAt || !identity.consentTraining) {
+  if (!identity) {
     await sendText(
       phoneE164,
       "Ainda não estás no StrikeLab! Escreve 'strikelab' para te inscreveres e começares a ganhar pontos. 🏆",
@@ -164,66 +168,6 @@ export async function handleStrikelabMe(phoneE164: string): Promise<void> {
     phoneE164,
     `🏆 A tua evolução StrikeLab:\n\n${link}\n\nEste link é pessoal — não o partilhes.`,
   );
-}
-
-/** Handle consent response buttons. */
-export async function handleStrikelabConsent(
-  session: SessionRow,
-  buttonId: string,
-): Promise<void> {
-  const phone = session.phoneE164;
-
-  if (buttonId === "strikelab_decline") {
-    await resetToIdle(session);
-    await sendText(phone, "Sem problema! Se mudares de ideia, escreve 'strikelab'.");
-    return;
-  }
-
-  if (buttonId === "strikelab_accept") {
-    // Find identity by phone
-    const identity = await db.gamificationIdentity.findUnique({
-      where: { phoneE164: phone },
-    });
-
-    if (!identity) {
-      await resetToIdle(session);
-      await sendText(phone, "Ocorreu um erro. Tenta novamente escrevendo 'strikelab'.");
-      return;
-    }
-
-    // Apply consent — all 4 toggles for simplicity (Phase 0)
-    await applyConsent(identity.customerId, {
-      training: true,
-      ugc: false,
-      realName: false,
-      broadcasts: false,
-    });
-
-    // Emit identity_created event
-    await appendEvent({
-      customerId: identity.customerId,
-      eventType: "identity_created",
-      payloadJson: { source: "bot_onboarding", phone },
-      source: "bot",
-      idempotencyKey: `identity_created:${identity.customerId}`,
-    });
-
-    // Ask for referral code before welcoming
-    const res = await transition(session, { state: "STRIKELAB_AWAIT_REFERRAL" });
-    if (!res.ok) {
-      // Race condition — fall through to welcome
-      await resetToIdle(session);
-      await sendText(phone, WELCOME);
-      return;
-    }
-
-    await sendText(
-      phone,
-      "Tens um código de indicação de um amigo? 😊\n" +
-        "Responde com o código ou escreve 'não'.",
-    );
-    return;
-  }
 }
 
 /** Handle referral code input during onboarding. */

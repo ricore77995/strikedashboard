@@ -84,13 +84,10 @@ async function checkReferralGates(
     return { passed: false, reason: `inviter_${inviterGates.reason}` };
   }
 
-  // Gate 2: Referred has consented to training tracking
+  // Gate 2: Referred identity exists and not erased
   const referred = await findByCustomerId(referredCustomerId);
   if (!referred || referred.erasedAt) {
     return { passed: false, reason: "referred_no_identity" };
-  }
-  if (!referred.consentTraining) {
-    return { passed: false, reason: "referred_no_consent" };
   }
 
   return { passed: true };

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { db } from "@/lib/db";
-import { upsertIdentity } from "@/lib/gamification/identity";
 import { applyConsent, isOptedIn } from "@/lib/gamification/consent";
 
 const CID = 90020;
@@ -14,7 +13,10 @@ async function cleanup() {
 describe("consent module", () => {
   beforeAll(async () => {
     await cleanup();
-    await upsertIdentity({ customerId: CID, phoneE164: "+351911000020" });
+    // Create identity WITHOUT auto-opt-in so consent tests are meaningful
+    await db.gamificationIdentity.create({
+      data: { customerId: CID, phoneE164: "+351911000020" },
+    });
   });
 
   afterAll(cleanup);

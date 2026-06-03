@@ -21,7 +21,7 @@ describe("formatLeaderName", () => {
 
 // CIDs in a dedicated range to avoid collisions with other suites.
 const VIEWER = 90070;
-const CIDS = [90070, 90071, 90072, 90073, 90074, 90075];
+const CIDS = [90070, 90071, 90072, 90073, 90074];
 
 async function cleanup() {
   for (const id of CIDS) {
@@ -33,15 +33,15 @@ async function cleanup() {
 async function seed(
   customerId: number,
   monthlyPoints: number,
-  over: Partial<{ optInAt: Date | null; erasedAt: Date | null; consentTraining: boolean }> = {},
+  over: Partial<{ erasedAt: Date | null }> = {},
 ) {
   await db.gamificationIdentity.create({
     data: {
       customerId,
       phoneE164: `+3519110000${customerId}`,
-      optInAt: over.optInAt === undefined ? new Date() : over.optInAt,
+      consentTraining: true,
+      optInAt: new Date(),
       erasedAt: over.erasedAt ?? null,
-      consentTraining: over.consentTraining ?? true,
     },
   });
   await db.gamificationState.create({ data: { customerId, monthlyPoints, lifetimeXp: monthlyPoints } });
@@ -55,7 +55,6 @@ describe("getMonthlyLeaderboard", () => {
     await seed(VIEWER, 100); // the viewer, mid-pack
     await seed(90073, 0); // zero points → excluded
     await seed(90074, 999, { erasedAt: new Date() }); // erased → excluded
-    await seed(90075, 999, { optInAt: null, consentTraining: false }); // not opted in → excluded
   });
   afterAll(cleanup);
 
@@ -72,12 +71,11 @@ describe("getMonthlyLeaderboard", () => {
     expect(mine.find((r) => r.customerId === 90071)?.isViewer).toBe(false);
   });
 
-  it("excludes zero-point, erased, and non-consented students", async () => {
+  it("excludes zero-point and erased students", async () => {
     const board = await getMonthlyLeaderboard(VIEWER, 1000);
     const ids = board.map((r) => r.customerId);
     expect(ids).not.toContain(90073);
     expect(ids).not.toContain(90074);
-    expect(ids).not.toContain(90075);
   });
 
   it("respects the limit", async () => {

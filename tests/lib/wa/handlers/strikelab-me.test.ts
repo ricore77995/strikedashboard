@@ -29,14 +29,14 @@ async function cleanup() {
   await db.gamificationIdentity.deleteMany({ where: { customerId: CID } });
 }
 
-async function seedIdentity(over: Partial<{ optInAt: Date | null; consentTraining: boolean; erasedAt: Date | null }>) {
+async function seedIdentity(over: Partial<{ erasedAt: Date | null }> = {}) {
   await cleanup();
   await db.gamificationIdentity.create({
     data: {
       customerId: CID,
       phoneE164: PHONE,
-      optInAt: over.optInAt === undefined ? new Date() : over.optInAt,
-      consentTraining: over.consentTraining ?? true,
+      consentTraining: true,
+      optInAt: new Date(),
       erasedAt: over.erasedAt ?? null,
     },
   });
@@ -69,13 +69,7 @@ describe("handleStrikelabMe", () => {
     expect(mockedSendText).toHaveBeenCalledWith(PHONE_UNKNOWN, expect.stringContaining("strikelab"));
   });
 
-  it("nudges to onboard when identity exists but has not consented", async () => {
-    await seedIdentity({ optInAt: null, consentTraining: false });
-    await handleStrikelabMe(PHONE);
-    expect(mockedSendText).toHaveBeenCalledWith(PHONE, expect.stringContaining("Ainda não estás"));
-  });
-
-  it("sends the personal link when onboarded + consented + configured", async () => {
+  it("sends the personal link when onboarded + configured", async () => {
     await seedIdentity({});
     await handleStrikelabMe(PHONE);
     const [, body] = mockedSendText.mock.calls[0];

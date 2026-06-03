@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 /**
  * Monthly StrikeLab leaderboard.
  *
- * Ranks opted-in, non-erased, training-consented students by their current
- * monthlyPoints (which resets each month). Name resolution is the caller's job
+ * Ranks non-erased students by their current monthlyPoints
+ * (which resets each month). Name resolution is the caller's job
  * (names come from Yogo) — this module stays pure-DB and testable.
  */
 
@@ -39,7 +39,7 @@ export async function getMonthlyLeaderboard(
   const states = await db.gamificationState.findMany({
     where: {
       monthlyPoints: { gt: 0 },
-      identity: { optInAt: { not: null }, erasedAt: null, consentTraining: true },
+      identity: { erasedAt: null },
     },
     orderBy: [{ monthlyPoints: "desc" }, { lifetimeXp: "desc" }, { customerId: "asc" }],
     take: limit,

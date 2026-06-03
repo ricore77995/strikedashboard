@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   // Aggregate stats + challenge + paginated list — all in parallel
   const { isoWeek, windowStart } = challengeWindow(new Date());
-  const optedInWhere = { optInAt: { not: null }, consentTraining: true, erasedAt: null };
+  const optedInWhere = { erasedAt: null };
 
   const [identities, total, optedIn, pointsAgg, activeThisWeek, challengeRun] = await Promise.all([
     db.gamificationIdentity.findMany({
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
       email: i.email,
       instagramHandle: i.instagramHandle,
       igVerified: !!i.igVerifiedAt,
-      optedIn: !!i.optInAt && i.consentTraining,
+      optedIn: !i.erasedAt,
       birthYear: i.birthYear,
       erasedAt: i.erasedAt,
       state: i.state

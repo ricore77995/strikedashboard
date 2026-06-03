@@ -15,7 +15,6 @@ interface StudentData {
     igVerifiedAt: string | null;
     optInAt: string | null;
     optOutAt: string | null;
-    consentTraining: boolean;
     consentUgc: boolean;
     consentRealName: boolean;
     consentBroadcasts: boolean;
@@ -131,7 +130,6 @@ export default function StudentDetailPage() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mt-3">
         <h2 className="text-sm font-medium text-zinc-400 mb-2">Consentimentos</h2>
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <Consent label="Treino" on={identity.consentTraining} />
           <Consent label="UGC" on={identity.consentUgc} />
           <Consent label="Nome real" on={identity.consentRealName} />
           <Consent label="Broadcasts" on={identity.consentBroadcasts} />

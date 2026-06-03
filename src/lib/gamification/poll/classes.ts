@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { yogoFetch } from "@/lib/yogo/fetch";
 import { findByCustomerId } from "@/lib/gamification/identity";
 import { appendEvent } from "@/lib/gamification/event-log";
-import { isOptedIn } from "@/lib/gamification/consent";
 import { classify } from "@/lib/yogo/classify";
 import { getCurrentPeriod, getTodayISO } from "./shared";
 import { resolvePlanCategory, getPointsPerClass } from "@/lib/gamification/plan-resolver";
@@ -45,7 +44,6 @@ export interface PollResult {
   classesProcessed: number;
   checkinsObserved: number;
   skippedNoIdentity: number;
-  skippedOptOut: number;
   skippedNotActive: number;
   dobCaptured: number;
 }
@@ -119,7 +117,6 @@ export async function pollClasses(): Promise<PollResult> {
     classesProcessed: 0,
     checkinsObserved: 0,
     skippedNoIdentity: 0,
-    skippedOptOut: 0,
     skippedNotActive: 0,
     dobCaptured: 0,
   };
@@ -159,14 +156,7 @@ export async function pollClasses(): Promise<PollResult> {
       const dobCaptured = await captureDob(customerId, signup.user.date_of_birth);
       if (dobCaptured) result.dobCaptured++;
 
-      // 4. Opt-in check
-      const optedIn = await isOptedIn(customerId);
-      if (!optedIn) {
-        result.skippedOptOut++;
-        continue;
-      }
-
-      // 5. Classify gate — check membership state and resolve plan
+      // 4. Classify gate — check membership state and resolve plan
       const { state: membershipState, planCategory } = await getMembershipInfo(customerId);
       const isActive = membershipState === "active" || membershipState === null;
 

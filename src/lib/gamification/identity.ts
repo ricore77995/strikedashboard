@@ -65,6 +65,8 @@ export async function upsertIdentity(input: IdentityInput) {
       email: input.email ? normalizeEmail(input.email) : null,
       whatsappWaId: input.whatsappWaId ?? null,
       referralCode,
+      consentTraining: true,
+      optInAt: new Date(),
     },
   });
 }
