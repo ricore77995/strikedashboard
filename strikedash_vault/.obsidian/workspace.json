@@ -185,6 +185,7 @@
   },
   "active": "49c68d52ea834fd2",
   "lastOpenFiles": [
+    "StrikeLab-Loyalty-Rewards-Handoff-2026-06-03.md",
     "StrikeLab-Engine-Observability-Design.md",
     "StrikeLab-Loyalty-Rewards-Design.md",
     "Nav-Active-State-Fix-Handoff-2026-06-03.md",
@@ -212,7 +213,6 @@
     "gdpr/ROPA-Strikelab.md",
     "gdpr/Processor-Agreements.md",
     "gdpr/Privacy-Notice-StrikeLab.md",
-    "gdpr/Lawful-Basis-Register.md",
     "gdpr",
     "StrikeLab-Fluxo.canvas",
     "yogo-spikes/spike-4-dob-summary.json",
