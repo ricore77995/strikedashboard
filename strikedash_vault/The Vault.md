@@ -33,6 +33,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Phase-2-Referral-Handoff]] — **Referral handoff** — R1a+R1b+R2 shipped, R3 (WA bot) remaining. 15 tests green, adversarial fixes applied, file inventory
 - [[StrikeLab-Nav-Visibility-Plan]] — **Nav visibility plan** — 1-line nav link to surface StrikeLab admin pages (~1 LOC, ready for next dev cycle)
 - [[StrikeLab-Nav-Visibility-Handoff-2026-06-03]] — **Nav visibility handoff** — commit `26ec49c` shipped, StrikeLab tab now discoverable for admin users, all 5 acceptance criteria met
+- [[Nav-Active-State-Fix-Handoff-2026-06-03]] — **Active state fix handoff** — commit `5318f92` shipped, desktop nav and StrikeLab sub-nav now highlight parent tabs on nested routes, 2-file audit completed
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
