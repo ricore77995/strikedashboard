@@ -31,19 +31,22 @@ export default function StrikeLabLayout({ children }: { children: React.ReactNod
     <div>
       {/* Sub-nav */}
       <div className="flex gap-1 px-4 py-2 border-b border-zinc-800 overflow-x-auto">
-        {NAV.map((n) => (
-          <Link
-            key={n.href}
-            href={n.href}
-            className={`px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors ${
-              pathname === n.href
-                ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {n.label}
-          </Link>
-        ))}
+        {NAV.map((n) => {
+          const isActive = pathname === n.href || (n.href !== "/dashboard/strikelab" && pathname.startsWith(n.href));
+          return (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={`px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors ${
+                isActive
+                  ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {n.label}
+            </Link>
+          );
+        })}
       </div>
       {/* Content */}
       <div className="p-4">{children}</div>

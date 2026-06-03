@@ -83,19 +83,22 @@ export function Nav({ role, onRefresh, onLogout, lastFetch }: NavProps) {
       </div>
 
       <div className="hidden md:flex gap-1 border-b border-border-subtle overflow-x-auto">
-        {links.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`px-4 py-2 text-sm border-b-2 whitespace-nowrap ${
-              pathname === href
-                ? "border-accent text-white"
-                : "border-transparent text-muted-strong hover:text-white"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
+        {links.map(({ href, label }) => {
+          const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`px-4 py-2 text-sm border-b-2 whitespace-nowrap ${
+                isActive
+                  ? "border-accent text-white"
+                  : "border-transparent text-muted-strong hover:text-white"
+              }`}
+            >
+              {label}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Mobile bottom nav */}
