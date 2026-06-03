@@ -7,6 +7,8 @@ import { Leaderboard, type LeaderboardEntry } from "./leaderboard";
 
 interface MeData {
   customerId: number;
+  referralCode: string | null;
+  referralCount: number;
   leaderboard: LeaderboardEntry[];
   challenge: {
     name: string;
@@ -160,6 +162,38 @@ export function MeClient() {
               <div className="text-zinc-500 text-sm">Sem desafio esta semana</div>
               <div className="text-zinc-600 text-xs">Novos desafios às quartas ao meio-dia</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Referral card */}
+      {data.referralCode && (
+        <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🤝</span>
+            <span className="text-white font-medium text-sm">Indica um amigo</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-zinc-500 text-[10px] mb-1">O teu código</div>
+              <div className="text-2xl font-mono font-bold text-purple-400 tracking-widest">{data.referralCode}</div>
+            </div>
+            <button
+              onClick={() => {
+                const text = `Usa o meu código ${data.referralCode} na Strike House! 💪`;
+                navigator.clipboard.writeText(text).then(() => {
+                  const btn = document.activeElement as HTMLButtonElement;
+                  btn.textContent = "✓ Copiado!";
+                  setTimeout(() => { btn.textContent = "Partilhar"; }, 2000);
+                });
+              }}
+              className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-medium px-3 py-2 rounded-lg transition-colors shrink-0"
+            >
+              Partilhar
+            </button>
+          </div>
+          <div className="text-zinc-600 text-[10px] mt-2">
+            Amigos trazidos: {data.referralCount}
           </div>
         </div>
       )}

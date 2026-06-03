@@ -71,8 +71,15 @@ export async function GET(req: NextRequest) {
 
   const challengeDef = challengeRun ? getChallenge(challengeRun.challengeKey) : null;
 
+  // Referral stats: how many friends the student has referred
+  const referralCount = await db.referral.count({
+    where: { inviterCustomerId: customerId },
+  });
+
   return NextResponse.json({
     customerId,
+    referralCode: identity.referralCode,
+    referralCount,
     leaderboard,
     challenge: challengeDef
       ? {
