@@ -61,7 +61,7 @@ export async function upsertIdentity(input: IdentityInput) {
     },
     create: {
       customerId: input.customerId,
-      phoneE164: input.phoneE164,
+      phoneE164: input.phoneE164 ?? `auto_${input.customerId}`,
       email: input.email ? normalizeEmail(input.email) : null,
       whatsappWaId: input.whatsappWaId ?? null,
       referralCode,

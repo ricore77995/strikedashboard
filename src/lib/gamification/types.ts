@@ -57,7 +57,7 @@ export interface GamificationStateView {
 
 export interface IdentityInput {
   customerId: number;
-  phoneE164: string;
+  phoneE164?: string;
   email?: string | null;
   whatsappWaId?: string | null;
 }

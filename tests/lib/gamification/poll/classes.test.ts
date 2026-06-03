@@ -93,7 +93,7 @@ describe("pollClasses", () => {
     expect(event!.pointsDelta).toBe(0); // Phase 0
   });
 
-  it("skips students without identity", async () => {
+  it("auto-creates identity for students without one", async () => {
     mockedYogoFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -104,7 +104,7 @@ describe("pollClasses", () => {
           signups: [
             {
               id: 2,
-              user: { id: CID_NO_IDENTITY },
+              user: { id: CID_NO_IDENTITY, email: "new@test.com" },
               checked_in: Date.now(),
             },
           ],
@@ -114,8 +114,15 @@ describe("pollClasses", () => {
     });
 
     const result = await pollClasses();
-    expect(result.skippedNoIdentity).toBe(1);
-    expect(result.checkinsObserved).toBe(0);
+    // Identity was auto-created, not skipped
+    expect(result.skippedNoIdentity).toBe(0);
+
+    // Verify identity was created with auto-opt-in
+    const identity = await db.gamificationIdentity.findUnique({
+      where: { customerId: CID_NO_IDENTITY },
+    });
+    expect(identity).not.toBeNull();
+    expect(identity?.consentTraining).toBe(true);
   });
 
   it("emits event with pointsDelta=0 for dunning customers (audit trail)", async () => {

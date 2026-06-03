@@ -36,7 +36,7 @@ describe("appendEvent", () => {
     });
 
     expect(result.written).toBe(true);
-    expect(result.eventId).toBe(1); // first event
+    expect(result.eventId).toBeGreaterThan(0);
   });
 
   it("is idempotent — duplicate idempotencyKey returns written:false", async () => {

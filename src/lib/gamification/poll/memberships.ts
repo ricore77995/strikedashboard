@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { yogoFetch } from "@/lib/yogo/fetch";
-import { findByCustomerId } from "@/lib/gamification/identity";
+import { upsertIdentity, findByCustomerId } from "@/lib/gamification/identity";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { isNonActionableLead } from "@/lib/yogo/non-actionable-lead";
 import { getTodayISO, getCurrentPeriod } from "./shared";
@@ -143,11 +143,13 @@ export async function pollMemberships(): Promise<MembershipPollResult> {
       continue;
     }
 
-    // 2. Identity lookup
-    const identity = await findByCustomerId(row.user_id);
+    // 2. Identity lookup — auto-create if missing
+    let identity = await findByCustomerId(row.user_id);
     if (!identity) {
-      result.skippedNoIdentity++;
-      continue;
+      identity = await upsertIdentity({
+        customerId: row.user_id,
+        email: row.user_email,
+      });
     }
 
     if (identity.erasedAt) continue;
