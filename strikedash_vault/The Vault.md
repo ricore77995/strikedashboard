@@ -30,6 +30,7 @@ Central index for Striker's House Dashboard documentation.
 - [Weekly Challenges Plan](../docs/superpowers/plans/2026-06-01-strikelab-weekly-challenges.md) — 9-task TDD plan for the challenge engine (model, tz window, scorer, launch/resolve, crons)
 - [[StrikeLab-Next-Phase-Visibility]] — **post go-live re-evaluation + next phase** — engine live but cold/invisible; Slice A (nav link + overview) → Slice B (challenge read-only UI); then referrals/UGC/Champions League
 - [[StrikeLab-Phase-2-Referral-Design]] — **Phase 2 slice 3 design** — 3-tier referral system (trial +200, subscription +800, retention +1200), Referral model with status state machine, embaixador boost, 4 slices (R1a→R1b→R2→R3)
+- [[StrikeLab-Phase-2-Referral-Handoff]] — **Referral handoff** — R1a+R1b+R2 shipped, R3 (WA bot) remaining. 15 tests green, adversarial fixes applied, file inventory
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
