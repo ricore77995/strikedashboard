@@ -36,6 +36,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Nav-Visibility-Handoff-2026-06-03]] — **Nav visibility handoff** — commit `26ec49c` shipped, StrikeLab tab now discoverable for admin users, all 5 acceptance criteria met
 - [[Nav-Active-State-Fix-Handoff-2026-06-03]] — **Active state fix handoff** — commit `5318f92` shipped, desktop nav and StrikeLab sub-nav now highlight parent tabs on nested routes, 2-file audit completed
 - [[StrikeLab-Loyalty-Rewards-Design]] — **Phase 3 loyalty rewards design** — time-based loyalty tiers, admin-defined levels, Yogo discount code integration (Spike 3 resolved), approval queue, ~760 LOC across 7 slices
+- [[StrikeLab-Loyalty-Rewards-Handoff-2026-06-03]] — **Loyalty rewards handoff** — all 7 slices shipped (D1-D7), Prisma models + Yogo discount client + detection service + CRUD API + approval queue + cron + admin UI + sub-nav
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
