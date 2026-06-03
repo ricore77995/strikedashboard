@@ -3,12 +3,12 @@ import { db } from "@/lib/db";
 import { COOKIE_NAME } from "@/lib/auth";
 
 /**
- * POST /api/strikelab/admin/backfill-consent
+ * GET /api/strikelab/admin/backfill-consent
  *
- * One-time backfill: set consentTraining=true + optInAt=createdAt for all
+ * One-time backfill: set consentTraining=true + optInAt=now for all
  * existing non-erased identities that haven't opted in yet.
  */
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const cookie = req.cookies.get(COOKIE_NAME);
   if (!cookie?.value) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
