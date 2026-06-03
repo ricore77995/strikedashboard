@@ -30,6 +30,7 @@ import {
   handleStrikelabConsent,
   handleStrikelabParental,
   handleStrikelabMe,
+  handleStrikelabReferral,
 } from "@/lib/wa/handlers/strikelab-onboard";
 
 // Dispatch routes an inbound WhatsApp message based on (1) menu button IDs,
@@ -204,6 +205,11 @@ export async function dispatch(phoneE164: string, message: MetaInboundMessage): 
       if (intent.kind === "button" && intent.id === "strikelab_parental_done") {
         return handleStrikelabParental(session, intent.id);
       }
+      await resetToIdle(session);
+      return sendMenu(phoneE164);
+
+    case "STRIKELAB_AWAIT_REFERRAL":
+      if (intent.kind === "text") return handleStrikelabReferral(session, intent.body);
       await resetToIdle(session);
       return sendMenu(phoneE164);
 

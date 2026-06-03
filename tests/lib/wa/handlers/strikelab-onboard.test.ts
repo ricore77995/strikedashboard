@@ -19,7 +19,7 @@ vi.mock("@/lib/yogo/fetch", () => ({
   yogoFetch: vi.fn(),
 }));
 
-import { handleStrikelabOnboard, handleStrikelabConsent } from "@/lib/wa/handlers/strikelab-onboard";
+import { handleStrikelabOnboard, handleStrikelabConsent, handleStrikelabReferral } from "@/lib/wa/handlers/strikelab-onboard";
 import { findCustomerByPhone, getYogoUserDetail } from "@/lib/yogo/lookup";
 import { sendText, sendButton } from "@/lib/wa/meta";
 
@@ -45,18 +45,22 @@ const CID_ADULT = 90050;
 const CID_MINOR = 90051;
 const CID_NO_DOB = 90052;
 const CID_YOUNG = 90053;
+const CID_INVITER = 90054;
 const PHONE_ADULT = "+351911000050";
 const PHONE_MINOR = "+351911000051";
 const PHONE_NO_DOB = "+351911000052";
 const PHONE_YOUNG = "+351911000053";
+const PHONE_INVITER = "+351911000054";
+const TEST_REFERRAL_CODE = "TESTK9";
 
 async function cleanup() {
-  for (const id of [CID_ADULT, CID_MINOR, CID_NO_DOB, CID_YOUNG]) {
+  for (const id of [CID_ADULT, CID_MINOR, CID_NO_DOB, CID_YOUNG, CID_INVITER]) {
+    await db.referral.deleteMany({ where: { referredCustomerId: id } });
     await db.gamificationEventLog.deleteMany({ where: { customerId: id } });
     await db.gamificationState.deleteMany({ where: { customerId: id } });
     await db.gamificationIdentity.deleteMany({ where: { customerId: id } });
   }
-  for (const phone of [PHONE_ADULT, PHONE_MINOR]) {
+  for (const phone of [PHONE_ADULT, PHONE_MINOR, PHONE_INVITER]) {
     await db.waSession.deleteMany({ where: { phoneE164: phone } });
     await db.waOutbound.deleteMany({ where: { phoneE164: phone } });
     await db.waInbound.deleteMany({ where: { phoneE164: phone } });
@@ -205,7 +209,7 @@ describe("strikelab-onboard", () => {
       );
     });
 
-    it("accept → applies consent + emits identity_created event", async () => {
+    it("accept → applies consent + emits identity_created event + asks for referral code", async () => {
       await seedWaSession(PHONE_ADULT);
       // Identity should already exist from the adult test above
       await handleStrikelabConsent(makeSession(PHONE_ADULT), "strikelab_accept");
@@ -223,7 +227,122 @@ describe("strikelab-onboard", () => {
       });
       expect(event).not.toBeNull();
 
-      // Verify welcome message
+      // Verify referral code question (not direct welcome anymore)
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("código de indicação"),
+      );
+    });
+  });
+
+  describe("handleStrikelabReferral", () => {
+    /** Seed an inviter identity with a known referral code. */
+    async function seedInviter() {
+      await db.gamificationIdentity.upsert({
+        where: { customerId: CID_INVITER },
+        create: {
+          customerId: CID_INVITER,
+          phoneE164: PHONE_INVITER,
+          referralCode: TEST_REFERRAL_CODE,
+          consentTraining: true,
+        },
+        update: { referralCode: TEST_REFERRAL_CODE },
+      });
+    }
+
+    it("skip word 'não' → sends welcome without referral", async () => {
+      await seedWaSession(PHONE_ADULT);
+      await handleStrikelabReferral(makeSession(PHONE_ADULT, "STRIKELAB_AWAIT_REFERRAL"), "não");
+
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("Bem-vindo ao StrikeLab"),
+      );
+      expect(mockedSendText).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.stringContaining("bónus"),
+      );
+    });
+
+    it("skip word 'nao tenho' → sends welcome without referral", async () => {
+      await seedWaSession(PHONE_ADULT);
+      await handleStrikelabReferral(makeSession(PHONE_ADULT, "STRIKELAB_AWAIT_REFERRAL"), "nao tenho");
+
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("Bem-vindo ao StrikeLab"),
+      );
+    });
+
+    it("valid referral code → links referral + sends bonus message + welcome", async () => {
+      await seedInviter();
+      await seedWaSession(PHONE_ADULT);
+      // The adult identity must exist (consented)
+      await db.gamificationIdentity.upsert({
+        where: { customerId: CID_ADULT },
+        create: {
+          customerId: CID_ADULT,
+          phoneE164: PHONE_ADULT,
+          consentTraining: true,
+        },
+        update: {},
+      });
+
+      await handleStrikelabReferral(
+        makeSession(PHONE_ADULT, "STRIKELAB_AWAIT_REFERRAL"),
+        TEST_REFERRAL_CODE,
+      );
+
+      // Verify referral was created
+      const referral = await db.referral.findUnique({
+        where: { referredCustomerId: CID_ADULT },
+      });
+      expect(referral).not.toBeNull();
+      expect(referral?.inviterCustomerId).toBe(CID_INVITER);
+      expect(referral?.status).toBe("pending");
+
+      // Verify bonus + welcome message
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("bónus"),
+      );
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("Bem-vindo ao StrikeLab"),
+      );
+    });
+
+    it("invalid referral code → sends 'not found' + welcome (no retry loop)", async () => {
+      // Clean up referral from previous test
+      await db.referral.deleteMany({ where: { referredCustomerId: CID_ADULT } });
+      await seedWaSession(PHONE_ADULT);
+      // Adult identity must exist
+      await db.gamificationIdentity.upsert({
+        where: { customerId: CID_ADULT },
+        create: {
+          customerId: CID_ADULT,
+          phoneE164: PHONE_ADULT,
+          consentTraining: true,
+        },
+        update: {},
+      });
+
+      await handleStrikelabReferral(
+        makeSession(PHONE_ADULT, "STRIKELAB_AWAIT_REFERRAL"),
+        "ZZZZZZ",
+      );
+
+      // No referral created
+      const referral = await db.referral.findUnique({
+        where: { referredCustomerId: CID_ADULT },
+      });
+      expect(referral).toBeNull();
+
+      // Graceful fallback message
+      expect(mockedSendText).toHaveBeenCalledWith(
+        PHONE_ADULT,
+        expect.stringContaining("não encontrado"),
+      );
       expect(mockedSendText).toHaveBeenCalledWith(
         PHONE_ADULT,
         expect.stringContaining("Bem-vindo ao StrikeLab"),

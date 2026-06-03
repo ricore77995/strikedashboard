@@ -6,11 +6,18 @@ import { applyConsent } from "@/lib/gamification/consent";
 import { appendEvent } from "@/lib/gamification/event-log";
 import { resetToIdle, transition, type SessionRow } from "@/lib/wa/session";
 import { buildStudentLink } from "@/lib/gamification/student-link";
+import { linkReferral } from "@/lib/gamification/referral";
+
+/** Welcome message sent after onboarding completes (with or without referral code). */
+const WELCOME =
+  "Bem-vindo ao StrikeLab! 🎯🏆\n\n" +
+  "A partir de agora, cada treino conta. Vais acumular pontos e subir de nível.\n\n" +
+  "Boa sorte e bons treinos! 💪";
 
 /**
  * StrikeLab onboarding state machine.
  *
- * IDLE → "strikelab" → CHECK_DOB → consent flow → IDLE
+ * IDLE → "strikelab" → CHECK_DOB → consent flow → referral code → IDLE
  *
  * DOB enforcement (P15):
  *   - No Yogo customer → "fala com o Marcelo"
@@ -201,14 +208,63 @@ export async function handleStrikelabConsent(
       idempotencyKey: `identity_created:${identity.customerId}`,
     });
 
-    await resetToIdle(session);
+    // Ask for referral code before welcoming
+    const res = await transition(session, { state: "STRIKELAB_AWAIT_REFERRAL" });
+    if (!res.ok) {
+      // Race condition — fall through to welcome
+      await resetToIdle(session);
+      await sendText(phone, WELCOME);
+      return;
+    }
+
     await sendText(
       phone,
-      "Bem-vindo ao StrikeLab! 🎯🏆\n\n" +
-        "A partir de agora, cada treino conta. Vais acumular pontos e subir de nível.\n\n" +
-        "Boa sorte e bons treinos! 💪",
+      "Tens um código de indicação de um amigo? 😊\n" +
+        "Responde com o código ou escreve 'não'.",
     );
     return;
+  }
+}
+
+/** Handle referral code input during onboarding. */
+export async function handleStrikelabReferral(
+  session: SessionRow,
+  text: string,
+): Promise<void> {
+  const phone = session.phoneE164;
+  const trimmed = text.trim().toLowerCase();
+
+  // Detect "não" / skip responses
+  if (["não", "nao", "n", "no", "skip", "nao tenho"].includes(trimmed)) {
+    await resetToIdle(session);
+    await sendText(phone, WELCOME);
+    return;
+  }
+
+  // Find identity for this phone
+  const identity = await db.gamificationIdentity.findUnique({
+    where: { phoneE164: phone },
+  });
+  if (!identity) {
+    await resetToIdle(session);
+    await sendText(phone, WELCOME);
+    return;
+  }
+
+  // Try to link referral code
+  const result = await linkReferral(text.trim(), identity.customerId);
+  await resetToIdle(session);
+
+  if (result.ok) {
+    await sendText(
+      phone,
+      "Código aceite! O teu amigo vai ganhar bónus. 🎁\n\n" + WELCOME,
+    );
+  } else {
+    await sendText(
+      phone,
+      "Código não encontrado. Sem problema!\n\n" + WELCOME,
+    );
   }
 }
 

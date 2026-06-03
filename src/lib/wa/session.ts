@@ -10,7 +10,8 @@ export type WaSessionState =
   | "AWAIT_SONG_CONFIRM"
   | "AWAIT_SWAP_CONFIRM"
   | "STRIKELAB_AWAIT_CONSENT"
-  | "STRIKELAB_AWAIT_PARENTAL";
+  | "STRIKELAB_AWAIT_PARENTAL"
+  | "STRIKELAB_AWAIT_REFERRAL";
 
 export interface SessionRow {
   phoneE164: string;
