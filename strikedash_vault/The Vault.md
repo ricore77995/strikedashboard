@@ -32,6 +32,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Phase-2-Referral-Design]] — **Phase 2 slice 3 design** — 3-tier referral system (trial +200, subscription +800, retention +1200), Referral model with status state machine, embaixador boost, 4 slices (R1a→R1b→R2→R3)
 - [[StrikeLab-Phase-2-Referral-Handoff]] — **Referral handoff** — R1a+R1b+R2 shipped, R3 (WA bot) remaining. 15 tests green, adversarial fixes applied, file inventory
 - [[StrikeLab-Nav-Visibility-Plan]] — **Nav visibility plan** — 1-line nav link to surface StrikeLab admin pages (~1 LOC, ready for next dev cycle)
+- [[StrikeLab-Engine-Observability-Design]] — **Engine observability + challenge creator design** — 4 slices: engine dashboard, event enrichment, dynamic challenges, student trigger cards (~650 LOC, spec-draft)
 - [[StrikeLab-Nav-Visibility-Handoff-2026-06-03]] — **Nav visibility handoff** — commit `26ec49c` shipped, StrikeLab tab now discoverable for admin users, all 5 acceptance criteria met
 - [[Nav-Active-State-Fix-Handoff-2026-06-03]] — **Active state fix handoff** — commit `5318f92` shipped, desktop nav and StrikeLab sub-nav now highlight parent tabs on nested routes, 2-file audit completed
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
