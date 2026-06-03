@@ -185,6 +185,8 @@
   },
   "active": "49c68d52ea834fd2",
   "lastOpenFiles": [
+    "HeadOfCredit/Context-Engineering-Insights.md",
+    "HeadOfCredit",
     "StrikeLab-Loyalty-Rewards-Handoff-2026-06-03.md",
     "StrikeLab-Engine-Observability-Design.md",
     "StrikeLab-Loyalty-Rewards-Design.md",
@@ -212,7 +214,6 @@
     "gdpr/Retention-Policy.md",
     "gdpr/ROPA-Strikelab.md",
     "gdpr/Processor-Agreements.md",
-    "gdpr/Privacy-Notice-StrikeLab.md",
     "gdpr",
     "StrikeLab-Fluxo.canvas",
     "yogo-spikes/spike-4-dob-summary.json",
@@ -221,7 +222,6 @@
     "yogo-spikes/spike-2-memberships-raw.json",
     "yogo-spikes/spike-1-checkin-summary.json",
     "yogo-spikes/spike-1-classes-raw.json",
-    "yogo-spikes",
     "Untitled.canvas"
   ]
 }

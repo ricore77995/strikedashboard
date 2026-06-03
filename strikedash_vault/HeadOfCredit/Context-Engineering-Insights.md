@@ -1,0 +1,1 @@
+See file at /Users/ricore/Documents/Project/vault/HeadOfCredit/Context-Engineering-Insights.md

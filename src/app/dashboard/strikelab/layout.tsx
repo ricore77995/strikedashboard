@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/dashboard/strikelab", label: "Alunos" },
+  { href: "/dashboard/strikelab/engine", label: "Motor" },
   { href: "/dashboard/strikelab/loyalty", label: "Fidelidade" },
   { href: "/dashboard/strikelab/erasure", label: "Apagamentos" },
   { href: "/dashboard/strikelab/reset-audit", label: "Resets" },
