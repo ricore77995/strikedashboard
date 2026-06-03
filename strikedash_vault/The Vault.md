@@ -35,6 +35,7 @@ Central index for Striker's House Dashboard documentation.
 - [[StrikeLab-Engine-Observability-Design]] — **Engine observability + challenge creator design** — 4 slices: engine dashboard, event enrichment, dynamic challenges, student trigger cards (~650 LOC, spec-draft)
 - [[StrikeLab-Nav-Visibility-Handoff-2026-06-03]] — **Nav visibility handoff** — commit `26ec49c` shipped, StrikeLab tab now discoverable for admin users, all 5 acceptance criteria met
 - [[Nav-Active-State-Fix-Handoff-2026-06-03]] — **Active state fix handoff** — commit `5318f92` shipped, desktop nav and StrikeLab sub-nav now highlight parent tabs on nested routes, 2-file audit completed
+- [[StrikeLab-Loyalty-Rewards-Design]] — **Phase 3 loyalty rewards design** — time-based loyalty tiers, admin-defined levels, Yogo discount code integration (Spike 3 resolved), approval queue, ~760 LOC across 7 slices
 - [Phase 0 Final Plan](../docs/superpowers/plans/2026-05-28-strikelab-phase-0-final.md) — 21 tarefas, ~37h, 2.5 semanas (executed plan)
 
 ## API References
