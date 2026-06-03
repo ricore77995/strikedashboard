@@ -310,3 +310,61 @@ model Referral {
   @@index([inviterCustomerId])
   @@index([status])
 }
+
+// ─── StrikeLab Loyalty Rewards (Phase 3) ──────────────────────────────
+
+/// Admin-defined loyalty levels with conditions and rewards.
+model LoyaltyLevel {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+
+  // Condition
+  conditionType  String // "active_months" | "xp_tier"
+  conditionValue String // "6" (months) | "diamante" (tier name)
+
+  // Reward
+  rewardType  String // "free_month" | "fixed_amount"
+  rewardValue Int    // 0 for free_month (100% implied), cents for fixed_amount (e.g. 1500 = €15.00)
+
+  // Frequency
+  frequency String @default("once") // "once" | "yearly"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grants LoyaltyGrant[]
+
+  @@index([active])
+  @@index([conditionType])
+}
+
+/// Per-student loyalty grant with approval workflow.
+model LoyaltyGrant {
+  id             Int      @id @default(autoincrement())
+  loyaltyLevelId Int
+  yogoCustomerId Int
+  status         String  @default("pending_approval") // "pending_approval" | "approved" | "applied" | "expired" | "rejected"
+
+  // Approval
+  approvedBy String?
+  approvedAt DateTime?
+
+  // Yogo integration
+  yogoDiscountCodeId   Int?
+  yogoDiscountCodeName String?
+  appliedAt            DateTime?
+
+  // Context at qualification time
+  qualifyingValue String? // e.g. "6.2 months active" or "diamante tier reached 2026-05-28"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  loyaltyLevel LoyaltyLevel @relation(fields: [loyaltyLevelId], references: [id])
+
+  @@index([status])
+  @@index([yogoCustomerId])
+  @@index([loyaltyLevelId, status])
+}
