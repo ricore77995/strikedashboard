@@ -40,7 +40,7 @@ async function fetchFromYogo(): Promise<CacheEntry> {
       (t) => !t.archived && t.membershipCount > 0
     );
 
-    const values: Record<string, number> = { Outros: 0 };
+    const values: Record<string, number> = { Outros: 0 }; // Default for unclassified plans (never matches getPlan())
 
     for (const type of types) {
       const planKey = getPlan(type.name);
@@ -59,13 +59,14 @@ async function fetchFromYogo(): Promise<CacheEntry> {
         selectedOption = monthlyOption;
       }
 
-      // For PT packs, use total amount (they're one-time)
-      if (planKey.startsWith("PT")) {
-        values[planKey] = selectedOption.payment_amount;
-      } else {
-        // For recurring plans, store monthly value
-        values[planKey] = selectedOption.payment_amount;
-      }
+      // Basic validation: skip invalid payment amounts
+      if (selectedOption.payment_amount <= 0) continue;
+
+      // Both PT packs and recurring plans use the same logic:
+      // Extract the selected option's payment_amount directly.
+      // For PT packs: this is the one-time total (correct).
+      // For recurring plans: we already filtered for "Mensal" option, so this is monthly value.
+      values[planKey] = selectedOption.payment_amount;
     }
 
     return {
@@ -88,11 +89,13 @@ export async function getCachedPricing(): Promise<CacheEntry> {
   }
 
   // Cache is stale or doesn't exist, fetch fresh data
+  // Note: No race condition protection - acceptable for low-traffic internal dashboard
   try {
     const fresh = await fetchFromYogo();
     cache = fresh;
-    return fresh;
+    return cache; // Return cache, not fresh (per spec)
   } catch (error) {
+    console.error("Failed to fetch fresh pricing, using fallback:", error);
     // Fallback to last known good cache if available
     if (cache) {
       return { ...cache, source: "fallback" };
@@ -111,8 +114,11 @@ export async function forceRefreshPricing(): Promise<CacheEntry> {
   try {
     const fresh = await fetchFromYogo();
     cache = fresh;
-    return fresh;
+    return cache; // Return cache, not fresh (per spec)
   } catch (error) {
+    console.error("Failed to force refresh pricing:", error);
+    // Silent fallback is acceptable here - admin endpoint can still indicate success/failure
+    // via the API response, and caller will see the source="fallback" tag
     if (cache) {
       return { ...cache, source: "fallback" };
     }
