@@ -49,18 +49,14 @@ async function fetchFromYogo(): Promise<CacheEntry> {
       const saleableOptions = type.payment_options.filter((opt) => opt.for_sale);
       if (saleableOptions.length === 0) continue;
 
-      let selectedOption = saleableOptions[0];
-
       // For recurring plans, prefer "Mensal" option
       const monthlyOption = saleableOptions.find((opt) =>
         /Mensal/i.test(opt.name)
       );
-      if (monthlyOption) {
-        selectedOption = monthlyOption;
-      }
+      let selectedOption = monthlyOption || saleableOptions[0];
 
-      // Basic validation: skip invalid payment amounts
-      if (selectedOption.payment_amount <= 0) continue;
+      // Basic validation: skip invalid payment amounts (0, negative, NaN)
+      if (!selectedOption.payment_amount || selectedOption.payment_amount <= 0) continue;
 
       // Both PT packs and recurring plans use the same logic:
       // Extract the selected option's payment_amount directly.
