@@ -36,9 +36,11 @@ async function fetchFromYogo(): Promise<CacheEntry> {
       throw new Error("Invalid Yogo response");
     }
 
-    const types = response.data.filter(
-      (t) => !t.archived && t.membershipCount > 0
-    );
+    // Include all non-archived types — new plans may have 0 members but carry current prices
+    const types = response.data.filter((t) => !t.archived);
+
+    // Sort by ID ascending so newer plans (higher ID) overwrite legacy plans with same name
+    types.sort((a, b) => a.id - b.id);
 
     const values: Record<string, number> = { Outros: 0 }; // Default for unclassified plans (never matches getPlan())
 
@@ -46,14 +48,16 @@ async function fetchFromYogo(): Promise<CacheEntry> {
       const planKey = getPlan(type.name);
       if (planKey === "Outros") continue;
 
-      const saleableOptions = type.payment_options.filter((opt) => opt.for_sale);
-      if (saleableOptions.length === 0) continue;
+      if (!Array.isArray(type.payment_options) || type.payment_options.length === 0) continue;
 
-      // For recurring plans, prefer "Mensal" option
-      const monthlyOption = saleableOptions.find((opt) =>
-        /Mensal/i.test(opt.name)
+      // Match monthly option by name pattern or by covering exactly 1 month
+      const monthlyOption = type.payment_options.find((opt) =>
+        /Mensal|1\s*Month|Monthly/i.test(opt.name)
+      ) || type.payment_options.find((opt) =>
+        opt.number_of_months_payment_covers === 1
       );
-      let selectedOption = monthlyOption || saleableOptions[0];
+
+      let selectedOption = monthlyOption || type.payment_options[0];
 
       // Basic validation: skip invalid payment amounts (0, negative, NaN)
       if (!selectedOption.payment_amount || selectedOption.payment_amount <= 0) continue;
@@ -61,7 +65,7 @@ async function fetchFromYogo(): Promise<CacheEntry> {
       // Both PT packs and recurring plans use the same logic:
       // Extract the selected option's payment_amount directly.
       // For PT packs: this is the one-time total (correct).
-      // For recurring plans: we already filtered for "Mensal" option, so this is monthly value.
+      // For recurring plans: we matched the monthly option, so this is monthly value.
       values[planKey] = selectedOption.payment_amount;
     }
 
