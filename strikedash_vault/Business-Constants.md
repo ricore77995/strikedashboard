@@ -23,17 +23,9 @@ TRIAL_CLASS_PASS_ID = 14172   // Trial class pass
 
 ## Plan Names & Monthly Revenue
 
-| Plano | Valor |
-|-------|-------|
-| 24 sessoes/mes | EUR 60/mes |
-| 12 sessoes/mes | EUR 50/mes |
-| 8 sessoes/mes | EUR 40/mes |
-| Striking Trimestral | EUR 50 (trimestral) |
-| PT (Marcelo) 3x/sem | EUR 60/mes |
-| PT 4 Passes | EUR 200 (one-time) |
-| PT 8 Passes | EUR 400 (one-time) |
-| PT 12 Passes | EUR 600 (one-time) |
-| Outros | EUR 0 |
+Pricing is fetched dynamically from Yogo via `/api/yogo/pricing` and cached for 24h.
+
+See `src/lib/yogo/pricing-cache.ts` for cache management and Yogo API integration.
 
 ## Plan Classification
 
@@ -82,5 +74,6 @@ type ColorName = "emerald" | "blue" | "amber" | "red" | "purple" | "pink" | "cya
 ## Related
 
 - [[Yogo-API]] — como estes IDs sao usados nos endpoints
+- [[Yogo-Pricing-Cache]] — server-side pricing cache management
 - [[Design-System]] — COLOR_MAP
 - [[Gotchas]] — plan regex pode mudar
