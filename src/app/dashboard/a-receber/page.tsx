@@ -4,8 +4,8 @@ import { useEffect, useCallback, useState } from "react";
 import { useYogoFetch } from "@/hooks/use-yogo";
 import { useDashboard } from "@/app/dashboard/layout";
 import { LoaderIcon } from "@/components/icons";
+import { Pill } from "@/components/pill";
 import { getPlan, isPTPlan, eur } from "@/lib/utils";
-import { PLAN_VALUES } from "@/lib/constants";
 
 interface Membership {
   user_id?: number;
@@ -36,7 +36,7 @@ function getFirstWeekday(year: number, month: number): number {
   return d === 0 ? 6 : d - 1;
 }
 
-function buildDayMap(memberships: Membership[], year: number, month: number, todayStr: string): Map<string, DayEntry> {
+function buildDayMap(memberships: Membership[], year: number, month: number, todayStr: string, planValues: Record<string, number> | null): Map<string, DayEntry> {
   const map = new Map<string, DayEntry>();
   const daysInMonth = getDaysInMonth(year, month);
   const selectedYM = year * 12 + month;
@@ -48,7 +48,7 @@ function buildDayMap(memberships: Membership[], year: number, month: number, tod
   for (const m of memberships) {
     if (!m.paid_until) continue;
     const plan = getPlan(m.membership_type_name);
-    const value = PLAN_VALUES[plan] ?? 0;
+    const value = planValues?.[plan] ?? 0;
     if (value === 0) continue;
 
     const parts = m.paid_until.split("-");
@@ -92,6 +92,8 @@ export default function AReceberPage() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [planValues, setPlanValues] = useState<Record<string, number> | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,6 +110,16 @@ export default function AReceberPage() {
   }, [fetchReport, setLastFetch]);
 
   useEffect(() => { load(); }, [load, refreshKey]);
+
+  useEffect(() => {
+    fetch('/api/yogo/pricing')
+      .then((r) => r.json())
+      .then((data) => {
+        setPlanValues(data.values);
+        setLoadingPricing(false);
+      })
+      .catch(() => setLoadingPricing(false));
+  }, []);
 
   const prevMonth = () => {
     if (selectedMonth === 0) { setSelectedYear((y) => y - 1); setSelectedMonth(11); }
@@ -128,7 +140,7 @@ export default function AReceberPage() {
     selectedYear === today.getFullYear() && selectedMonth === today.getMonth();
   const todayStr = today.toISOString().slice(0, 10);
 
-  const dayMap = buildDayMap(memberships, selectedYear, selectedMonth, todayStr);
+  const dayMap = buildDayMap(memberships, selectedYear, selectedMonth, todayStr, planValues);
 
   let totalRecurring = 0;
   let totalPT = 0;
@@ -188,6 +200,12 @@ export default function AReceberPage() {
           </div>
         ))}
       </div>
+
+      {loadingPricing ? (
+        <div style={{ padding: "0 18px 8px" }}>
+          <Pill color="amber">A carregar preços...</Pill>
+        </div>
+      ) : null}
 
       {/* Calendar */}
       <div style={{ padding: "0 18px" }}>
@@ -309,7 +327,7 @@ export default function AReceberPage() {
           .map((m) => {
             const plan = getPlan(m.membership_type_name);
             const startDate = m.start_date ?? m.created_at ?? "";
-            return { name: m.user_full_name!, startDate, paid_until: m.paid_until ?? "", plan, value: PLAN_VALUES[plan] ?? 0 };
+            return { name: m.user_full_name!, startDate, paid_until: m.paid_until ?? "", plan, value: planValues?.[plan] ?? 0 };
           })
           .filter((m) => m.value > 0)
           .sort((a, b) => b.startDate.localeCompare(a.startDate))
