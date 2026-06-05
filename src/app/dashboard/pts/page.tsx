@@ -39,7 +39,6 @@ export default function PTsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [planGroups, setPlanGroups] = useState<PlanGroup[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPTs, setTotalPTs] = useState(0);
   const [planValues, setPlanValues] = useState<Record<string, number> | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(true);
@@ -92,10 +91,7 @@ export default function PTsPage() {
         .filter((p) => isPTPlan(p) && grouped[p])
         .map((p) => ({ plan: p, customers: grouped[p] }));
 
-      const rev = ordered.reduce((sum, g) => sum + g.customers.length * (planValues?.[g.plan] ?? 0), 0);
-
       setPlanGroups(ordered);
-      setTotalRevenue(rev);
       setTotalPTs(ptCustomers.length);
       setLastFetch(new Date());
     } catch (e) {
@@ -118,6 +114,9 @@ export default function PTsPage() {
       })
       .catch(() => setLoadingPricing(false));
   }, []);
+
+  // Derived from planGroups + planValues — recalculates when pricing loads
+  const totalRevenue = planGroups.reduce((sum, g) => sum + g.customers.length * (planValues?.[g.plan] ?? 0), 0);
 
   if (loading) return <div className="py-20 flex justify-center"><LoaderIcon /></div>;
   if (error) return <div className="py-20 text-center text-tone-coral text-sm">Erro: {error}</div>;
