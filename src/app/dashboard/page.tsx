@@ -18,7 +18,7 @@ import {
   getDashboardRange, getLast30Days, fmtDate, getYesterday,
   getPlan, isPTPlan, isNonActionableLead,
 } from "@/lib/utils";
-import { ALL_SUB_IDS, RECURRING_SUB_IDS, TRIAL_CLASS_TYPE_ID, TRIAL_CLASS_PASS_ID, PLAN_VALUES } from "@/lib/constants";
+import { ALL_SUB_IDS, RECURRING_SUB_IDS, TRIAL_CLASS_TYPE_ID, TRIAL_CLASS_PASS_ID } from "@/lib/constants";
 
 type Rec = Record<string, unknown>;
 
@@ -67,6 +67,8 @@ export default function DashboardPage() {
   const [trialAttended, setTrialAttended] = useState<Rec[]>([]);
   const [trialClasses, setTrialClasses] = useState<Rec[]>([]);
   const [allClasses, setAllClasses] = useState<Rec[]>([]);
+  const [planValues, setPlanValues] = useState<Record<string, number> | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
 
   const classesUrl = useCallback((trialOnly: boolean) => {
     const { startDate, endDate } = getDashboardRange();
@@ -151,6 +153,16 @@ export default function DashboardPage() {
     load();
     return () => { cancelled = true; };
   }, [refreshKey, isAdmin, fetchYogo, fetchReport, fetchGraphQL, classesUrl, sixMonthsAgo, setLastFetch]);
+
+  useEffect(() => {
+    fetch('/api/yogo/pricing')
+      .then((r) => r.json())
+      .then((data) => {
+        setPlanValues(data.values);
+        setLoadingPricing(false);
+      })
+      .catch(() => setLoadingPricing(false));
+  }, []);
 
   /* ─── Derived state ─── */
   const ptCount = subs.filter((c) => isPTPlan(getPlan(String(c.has_membership_membership_description || "")))).length;
@@ -255,6 +267,11 @@ export default function DashboardPage() {
               <div className="head" style={{ fontSize: 11, color: "rgba(255,255,255,0.72)", marginBottom: 8 }}>
                 Receita YTD
               </div>
+              {loadingPricing ? (
+                <div style={{ fontSize: 10, color: "#FFB627", marginBottom: 6 }}>
+                  A carregar preços...
+                </div>
+              ) : null}
               <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
                 <div className="num" style={{ fontSize: 56, color: "#fff", lineHeight: 0.85 }}>
                   {eur(revenueTotal)}
@@ -296,7 +313,7 @@ export default function DashboardPage() {
             .map((m) => {
               const plan = getPlan(String(m.membership_type_name || ""));
               const startDate = String(m.start_date || m.created_at || "");
-              return { name: String(m.user_full_name), startDate, plan, value: PLAN_VALUES[plan] ?? 0 };
+              return { name: String(m.user_full_name), startDate, plan, value: planValues?.[plan] ?? 0 };
             })
             .filter((m) => m.value > 0 && !isPTPlan(m.plan))
             .sort((a, b) => b.startDate.localeCompare(a.startDate))
