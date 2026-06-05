@@ -5,8 +5,9 @@ import { useYogoFetch } from "@/hooks/use-yogo";
 import { useDashboard } from "@/app/dashboard/layout";
 import { LoaderIcon } from "@/components/icons";
 import { getPlan, isPTPlan, eur } from "@/lib/utils";
-import { ALL_SUB_IDS, PLAN_VALUES } from "@/lib/constants";
+import { ALL_SUB_IDS } from "@/lib/constants";
 import { SubRow } from "@/components/sub-row";
+import { Pill } from "@/components/pill";
 import { type SubStatus } from "@/components/status-pill";
 
 interface Customer {
@@ -57,6 +58,8 @@ export default function SubscribersPage() {
   const [error, setError] = useState<string | null>(null);
   const [allCustomers, setAllCustomers] = useState<EnrichedCustomer[]>([]);
   const [activeFilter, setActiveFilter] = useState<"all" | "active" | "risk" | "failed" | "paused">("all");
+  const [planValues, setPlanValues] = useState<Record<string, number> | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,6 +131,16 @@ export default function SubscribersPage() {
 
   useEffect(() => { load(); }, [load, refreshKey]);
 
+  useEffect(() => {
+    fetch('/api/yogo/pricing')
+      .then((r) => r.json())
+      .then((data) => {
+        setPlanValues(data.values);
+        setLoadingPricing(false);
+      })
+      .catch(() => setLoadingPricing(false));
+  }, []);
+
   if (loading) return <div className="py-20 flex justify-center"><LoaderIcon /></div>;
   if (error) return <div className="py-20 text-center text-tone-coral text-sm">Erro: {error}</div>;
 
@@ -143,8 +156,8 @@ export default function SubscribersPage() {
   const totalCount = allCustomers.length;
   const grupoCount = allCustomers.filter((c) => !c.isPT).length;
   const ptCount = totalCount - grupoCount;
-  const totalRevenue = allCustomers.reduce((sum, c) => sum + (PLAN_VALUES[c.plan] || 0), 0);
-  const grupoRevenue = allCustomers.filter((c) => !c.isPT).reduce((s, c) => s + (PLAN_VALUES[c.plan] || 0), 0);
+  const totalRevenue = allCustomers.reduce((sum, c) => sum + (planValues?.[c.plan] ?? 0), 0);
+  const grupoRevenue = allCustomers.filter((c) => !c.isPT).reduce((s, c) => s + (planValues?.[c.plan] ?? 0), 0);
   const ptRevenue = totalRevenue - grupoRevenue;
 
   const filters = [
@@ -168,7 +181,10 @@ export default function SubscribersPage() {
         </div>
         <div style={{ background: "#0F0F14", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: 14 }}>
           <div className="head" style={{ fontSize: 10, color: "rgba(255,255,255,0.72)", marginBottom: 6 }}>MRR ESTIMADO</div>
-          <div className="num" style={{ fontSize: 38, color: "#00E5A0" }}>{eur(totalRevenue)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="num" style={{ fontSize: 38, color: "#00E5A0" }}>{eur(totalRevenue)}</div>
+            {loadingPricing ? <Pill color="amber">A carregar preços...</Pill> : null}
+          </div>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
             {eur(grupoRevenue)} grupo · {eur(ptRevenue)} PT
           </div>
