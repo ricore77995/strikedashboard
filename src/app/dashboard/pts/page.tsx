@@ -7,7 +7,7 @@ import { StatCard } from "@/components/stat-card";
 import { PaymentBadge } from "@/components/payment-badge";
 import { LoaderIcon, UsersIcon, EuroIcon } from "@/components/icons";
 import { getPlan, isPTPlan, planColor, eur } from "@/lib/utils";
-import { ALL_SUB_IDS, PLAN_ORDER, PLAN_VALUES } from "@/lib/constants";
+import { ALL_SUB_IDS, PLAN_ORDER } from "@/lib/constants";
 import { Pill } from "@/components/pill";
 import type { ColorName } from "@/lib/constants";
 
@@ -41,6 +41,8 @@ export default function PTsPage() {
   const [planGroups, setPlanGroups] = useState<PlanGroup[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPTs, setTotalPTs] = useState(0);
+  const [planValues, setPlanValues] = useState<Record<string, number> | null>(null);
+  const [loadingPricing, setLoadingPricing] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,7 +92,7 @@ export default function PTsPage() {
         .filter((p) => isPTPlan(p) && grouped[p])
         .map((p) => ({ plan: p, customers: grouped[p] }));
 
-      const rev = ordered.reduce((sum, g) => sum + g.customers.length * (PLAN_VALUES[g.plan] || 0), 0);
+      const rev = ordered.reduce((sum, g) => sum + g.customers.length * (planValues?.[g.plan] ?? 0), 0);
 
       setPlanGroups(ordered);
       setTotalRevenue(rev);
@@ -103,7 +105,19 @@ export default function PTsPage() {
     }
   }, [fetchReport, setLastFetch]);
 
-  useEffect(() => { load(); }, [load, refreshKey]);
+  useEffect(() => {
+    load();
+  }, [load, refreshKey]);
+
+  useEffect(() => {
+    fetch('/api/yogo/pricing')
+      .then((r) => r.json())
+      .then((data) => {
+        setPlanValues(data.values);
+        setLoadingPricing(false);
+      })
+      .catch(() => setLoadingPricing(false));
+  }, []);
 
   if (loading) return <div className="py-20 flex justify-center"><LoaderIcon /></div>;
   if (error) return <div className="py-20 text-center text-tone-coral text-sm">Erro: {error}</div>;
@@ -118,6 +132,10 @@ export default function PTsPage() {
   return (
     <div className="space-y-8">
       <h1 className="head text-xl font-bold">PTs do Marcelo (<span className="num">{totalPTs}</span>)</h1>
+
+      {loadingPricing ? (
+        <Pill color="amber">A carregar preços...</Pill>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4">
         <StatCard icon={<UsersIcon />} label="Total clientes PT" value={totalPTs} color="cyan" />
@@ -146,7 +164,7 @@ export default function PTsPage() {
           <div key={plan} className="bg-surface rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <Pill color={planColor(plan) as ColorName}>{plan}</Pill>
-              <span className="text-muted-strong text-sm"><span className="num">{customers.length}</span> cliente{customers.length !== 1 ? "s" : ""} · {eur(customers.length * (PLAN_VALUES[plan] || 0))}/mês</span>
+              <span className="text-muted-strong text-sm"><span className="num">{customers.length}</span> cliente{customers.length !== 1 ? "s" : ""} · {eur(customers.length * (planValues?.[plan] ?? 0))}/mês</span>
             </div>
             <div className="space-y-2">
               {[...customers]
