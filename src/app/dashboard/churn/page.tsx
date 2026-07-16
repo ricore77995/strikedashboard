@@ -77,7 +77,7 @@ export default function ChurnPage() {
 
   const { rows, aggregates } = report;
 
-  const chartData = (() => {
+  const monthlyChartData = (() => {
     const counts = new Map<string, number>();
     for (const r of rows) {
       if (!r.churnMonth) continue;
@@ -85,6 +85,22 @@ export default function ChurnPage() {
     }
     const months = Array.from(counts.keys()).sort();
     return months.map((m) => ({ label: `${m.slice(5)}/${m.slice(2, 4)}`, value: counts.get(m) ?? 0 }));
+  })();
+
+  const durationChartData = (() => {
+    const buckets: { label: string; min: number; max: number | null }[] = [
+      { label: "< 1 mês", min: 0, max: 30 },
+      { label: "1-3 m", min: 30, max: 90 },
+      { label: "3-6 m", min: 90, max: 180 },
+      { label: "6-12 m", min: 180, max: 365 },
+      { label: "1-2 a", min: 365, max: 730 },
+      { label: "> 2 a", min: 730, max: null },
+    ];
+    const counts = buckets.map((b) => ({
+      label: b.label,
+      value: rows.filter((r) => r.durationDays >= b.min && (b.max === null || r.durationDays < b.max)).length,
+    }));
+    return counts;
   })();
 
   const tableRows = rows
@@ -124,8 +140,8 @@ export default function ChurnPage() {
         <Card label="Plano mais churnado" value={topPlanLabel} />
       </div>
 
-      {/* Chart */}
-      {chartData.length > 0 && (
+      {/* Charts */}
+      {monthlyChartData.length > 0 && (
         <div
           style={{
             background: "#0F0F14",
@@ -141,7 +157,27 @@ export default function ChurnPage() {
           >
             CHURN POR MÊS
           </div>
-          <BarChart data={chartData} height={180} format="count" />
+          <BarChart data={monthlyChartData} height={180} format="count" />
+        </div>
+      )}
+
+      {durationChartData.length > 0 && (
+        <div
+          style={{
+            background: "#0F0F14",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 14,
+          }}
+        >
+          <div
+            className="head"
+            style={{ fontSize: 10, color: "rgba(255,255,255,0.72)", marginBottom: 10, letterSpacing: "0.02em" }}
+          >
+            PERMANÊNCIA ATÉ CHURN
+          </div>
+          <BarChart data={durationChartData} height={180} format="count" />
         </div>
       )}
 
