@@ -1,16 +1,24 @@
 "use client";
 import { eur } from "@/lib/utils";
 
-interface BarChartProps { data: { label: string; value: number }[]; height?: number; currentIdx?: number; }
+type ValueFormat = "currency" | "count";
 
-export function BarChart({ data, height = 240, currentIdx }: BarChartProps) {
+interface BarChartProps { data: { label: string; value: number }[]; height?: number; currentIdx?: number; format?: ValueFormat; }
+
+export function BarChart({ data, height = 240, currentIdx, format = "currency" }: BarChartProps) {
   const W = 700, H = height;
   const pad = { top: 10, right: 10, bottom: 30, left: 55 };
   const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
   const maxV = Math.max(...data.map((d) => d.value), 1);
   const bw = (cw / data.length) * 0.7, gp = (cw / data.length) * 0.3;
   const ticks = [0, 0.25, 0.5, 0.75, 1];
-  const fmtTick = (v: number) => (v >= 1000 ? "€" + (v / 1000).toFixed(1) + "k" : "€" + Math.round(v));
+
+  const fmtTick = (v: number) => {
+    if (format === "count") return String(Math.round(v));
+    return v >= 1000 ? "€" + (v / 1000).toFixed(1) + "k" : "€" + Math.round(v);
+  };
+
+  const fmtTooltip = (v: number) => (format === "count" ? `${v}` : eur(v));
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
@@ -26,7 +34,7 @@ export function BarChart({ data, height = 240, currentIdx }: BarChartProps) {
         const fill = i === currentIdx ? "#00E5A0" : i < (currentIdx ?? -1) ? "rgba(0,229,160,0.6)" : "#15151C";
         return (
           <g key={i}>
-            <rect x={x} y={y} width={bw} height={h} fill={fill} rx={3}><title>{d.label}: {eur(d.value)}</title></rect>
+            <rect x={x} y={y} width={bw} height={h} fill={fill} rx={3}><title>{d.label}: {fmtTooltip(d.value)}</title></rect>
             <text x={x + bw / 2} y={H - pad.bottom + 16} fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle">{d.label}</text>
           </g>
         );

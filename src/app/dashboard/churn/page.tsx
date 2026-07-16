@@ -87,17 +87,20 @@ export default function ChurnPage() {
     return months.map((m) => ({ label: `${m.slice(5)}/${m.slice(2, 4)}`, value: counts.get(m) ?? 0 }));
   })();
 
-  const tableRows = rows.map((r) => ({
-    Nome: r.name,
-    Plano: r.plan,
-    Início: r.startDate ?? "—",
-    Saída: r.endDate ?? "—",
-    Permanência: r.durationLabel,
-    Aulas: `${r.checkedInClasses}/${r.totalClasses}`,
-    "Aulas/mês": r.classesPerMonth.toFixed(1),
-    "Última aula": r.lastClassDate ?? "—",
-    Motivo: EXIT_LABELS[r.exitReason],
-  }));
+  const tableRows = rows
+    .slice()
+    .sort((a, b) => (b.endDate || "").localeCompare(a.endDate || ""))
+    .map((r) => ({
+      Nome: r.name,
+      Plano: r.plan,
+      Início: r.startDate ?? "—",
+      Saída: r.endDate ?? "—",
+      Permanência: r.durationLabel,
+      Aulas: `${r.checkedInClasses}/${r.totalClasses}`,
+      "Aulas/mês": r.classesPerMonth.toFixed(1),
+      "Última aula": r.lastClassDate ?? "—",
+      Motivo: EXIT_LABELS[r.exitReason],
+    }));
 
   const topPlanLabel = aggregates.topPlan
     ? `${aggregates.topPlan.plan} (${aggregates.topPlan.count})`
@@ -138,7 +141,7 @@ export default function ChurnPage() {
           >
             CHURN POR MÊS
           </div>
-          <BarChart data={chartData} height={180} />
+          <BarChart data={chartData} height={180} format="count" />
         </div>
       )}
 
