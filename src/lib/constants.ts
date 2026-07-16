@@ -41,7 +41,6 @@ export const SALES_VISIBLE_ROUTES = [
 export const ADMIN_ONLY_ROUTES = [
   "/dashboard/revenue",
   "/dashboard/churn",
-  "/dashboard/failed",
   "/dashboard/subscribers",
   "/dashboard/pts",
   "/dashboard/a-receber",

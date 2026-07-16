@@ -103,8 +103,8 @@ export default function DashboardPage() {
 
         const commonPromises = {
           leads: fetchReport("reports/customers", { filters: [{ type: "hasNoMembership", membershipTypeId: [], onlyActiveMemberships: false }, { type: "hasNoClassPass", classPassTypeId: [], onlyActiveClassPasses: false }], returnColumnHeaders: true }),
-          trialNoConv: fetchReport("reports/customers", { filters: [{ type: "hasNoMembership", membershipTypeId: [], onlyActiveMemberships: false }, { type: "hasMembershipOrClassPass", membershipTypeId: [], classPassTypeId: [TRIAL_CLASS_PASS_ID], onlyActiveMembershipsOrClassPasses: false }, { type: "numberOfSignups", classTypeId: [TRIAL_CLASS_TYPE_ID], membershipTypeId: [], conditionType: "greaterThanOrEquals", conditionAmount: 1, averagePerTimeUnit: "month", startDate: sixMAgo, endDate: yesterday, includeClassSignups: true, onlyCheckedInClassSignups: false, includeWaitingListSignups: false, includeLivestreamSignups: false, includeZeroSignups: false }], returnColumnHeaders: true }),
-          trialAttended: fetchReport("reports/customers", { filters: [{ type: "hasNoMembership", membershipTypeId: [], onlyActiveMemberships: false }, { type: "hasMembershipOrClassPass", membershipTypeId: [], classPassTypeId: [TRIAL_CLASS_PASS_ID], onlyActiveMembershipsOrClassPasses: false }, { type: "numberOfSignups", classTypeId: [TRIAL_CLASS_TYPE_ID], membershipTypeId: [], conditionType: "greaterThanOrEquals", conditionAmount: 1, averagePerTimeUnit: "month", startDate: sixMAgo, endDate: today, includeClassSignups: true, onlyCheckedInClassSignups: true, includeWaitingListSignups: false, includeLivestreamSignups: false, includeZeroSignups: false }], returnColumnHeaders: true }),
+          trialNoConv: fetchReport("reports/customers", { filters: [{ type: "hasNoMembership", membershipTypeId: [], onlyActiveMemberships: false }, { type: "hasMembershipOrClassPass", membershipTypeId: [], classPassTypeId: [TRIAL_CLASS_PASS_ID], onlyActiveMembershipsOrClassPasses: false }, { type: "numberOfSignups", classTypeId: [TRIAL_CLASS_TYPE_ID], membershipTypeId: [], conditionType: "greaterThanOrEquals", conditionAmount: 1, averagePerTimeUnit: "month", startDate: last30Start, endDate: yesterday, includeClassSignups: true, onlyCheckedInClassSignups: false, includeWaitingListSignups: false, includeLivestreamSignups: false, includeZeroSignups: false }], returnColumnHeaders: true }),
+          trialAttended: fetchReport("reports/customers", { filters: [{ type: "hasNoMembership", membershipTypeId: [], onlyActiveMemberships: false }, { type: "hasMembershipOrClassPass", membershipTypeId: [], classPassTypeId: [TRIAL_CLASS_PASS_ID], onlyActiveMembershipsOrClassPasses: false }, { type: "numberOfSignups", classTypeId: [TRIAL_CLASS_TYPE_ID], membershipTypeId: [], conditionType: "greaterThanOrEquals", conditionAmount: 1, averagePerTimeUnit: "month", startDate: last30Start, endDate: today, includeClassSignups: true, onlyCheckedInClassSignups: true, includeWaitingListSignups: false, includeLivestreamSignups: false, includeZeroSignups: false }], returnColumnHeaders: true }),
           trialClasses: fetchYogo(classesUrl(true)),
           allClasses: fetchYogo(classesUrl(false)),
         };
@@ -168,22 +168,44 @@ export default function DashboardPage() {
   const ptCount = subs.filter((c) => isPTPlan(getPlan(String(c.has_membership_membership_description || "")))).length;
   const groupSubsCount = subs.length - ptCount;
   const churnPct = subs.length > 0 ? Math.round((churn.length / subs.length) * 100) : 0;
+  // YTD revenue: use totalExVat to avoid double-counting refunds/separate refunds
   const revenueTotal = revenueItems.reduce((sum, period) => {
     const items = (period.items || []) as Rec[];
-    return sum + items.reduce((s, it) => s + (Number(it.totalInclVat) || 0), 0);
+    return sum + items.reduce((s, it) => s + (Number(it.totalExVat) || 0), 0);
   }, 0);
   const monthsElapsed = new Date().getMonth() + 1;
   const avgMonth = monthsElapsed > 0 ? Math.round(revenueTotal / monthsElapsed) : 0;
   const sparkData = buildSparkData(revenueItems);
 
+  const todayStr = fmtDate(new Date());
+  const { startDate: last30Start } = getLast30Days();
   const pausedCount = memberships.filter((m) => /^Paus/i.test(String(m.status_text || ""))).length;
   const cancelledRunningCount = memberships.filter((m) => m.status === "cancelled_running").length;
   const pausedOrCancelledCount = pausedCount + cancelledRunningCount;
 
+  const subMemberships = (memberships as Rec[]).filter((m) =>
+    ALL_SUB_IDS.includes(Number(m.membership_type_id))
+  );
+
+  const lateActiveCount = subMemberships.filter((m) => {
+    if (!(m.status === "active" || m.status === "paused") || /^Paus/i.test(String(m.status_text || ""))) return false;
+    if (!m.paid_until || String(m.paid_until) >= todayStr) return false;
+    const days = Math.round((new Date(todayStr).getTime() - new Date(String(m.paid_until)).getTime()) / 86400000);
+    return days <= 20;
+  }).length;
+  const churnActiveCount = subMemberships.filter((m) => {
+    if (!(m.status === "active" || m.status === "paused") || /^Paus/i.test(String(m.status_text || ""))) return false;
+    if (!m.paid_until || String(m.paid_until) >= todayStr) return false;
+    const days = Math.round((new Date(todayStr).getTime() - new Date(String(m.paid_until)).getTime()) / 86400000);
+    return days > 20;
+  }).length;
+  const failedEndedCount = (failed as Rec[])?.length || 0;
+
   const trialIds = new Set(trialNoConv.map((t) => String(t.id || t.customer_id)));
   const leadsActionable = leads
     .filter((l) => !trialIds.has(String(l.id || l.customer_id)))
-    .filter((l) => !isNonActionableLead(l as { email?: string }));
+    .filter((l) => !isNonActionableLead(l as { email?: string }))
+    .filter((l) => String(l.created_at ?? "").slice(0, 10) >= last30Start);
   const attendedIds = new Set(trialAttended.map((r) => String(r.id || r.customer_id)));
   const trialEnriched = trialNoConv.map((t) => ({ ...t, attended: attendedIds.has(String(t.id || t.customer_id)) })) as (Rec & { attended: boolean })[];
   const trialAttendedCount = trialEnriched.filter((t) => t.attended).length;
@@ -238,7 +260,8 @@ export default function DashboardPage() {
   /* ─── ADMIN VIEW ─── */
   if (isAdmin) {
     const actions = [
-      failed.length > 0 && { count: failed.length, label: "pagamentos falhados", detail: "Cartões expirados ou recusados — recuperar receita ou cancelar", cta: "Contactar", tone: "#FF3D2E", href: "/dashboard/failed" },
+      lateActiveCount > 0 && { count: lateActiveCount, label: "pagamentos em falha", detail: "Ativos com pagamento pendente há até 20 dias — recuperar receita", cta: "Contactar", tone: "#FF3D2E", href: "/dashboard/subscribers?filter=failed" },
+      (churnActiveCount + failedEndedCount) > 0 && { count: churnActiveCount + failedEndedCount, label: "pagamentos falhados / churn", detail: `${failedEndedCount} memberships ended + ${churnActiveCount} ativos com pagamento atrasado há +20 dias`, cta: "Rever", tone: "#9BA2B1", href: "/dashboard/subscribers?filter=churn" },
       churn.length > 0 && { count: churn.length, label: "membros em risco de churn", detail: `0 aulas nos últimos 30 dias — risco de cancelamento`, cta: "Rever", tone: "#FFB627", href: "/dashboard/churn" },
       trialAttendedCount > 0 && { count: trialAttendedCount, label: "trials que foram à aula", detail: "Lead quente — fechar venda nas próximas 24-48h", cta: "Follow-up", tone: "#FF2E88", href: "/dashboard/trials" },
       trialNoShowCount > 0 && { count: trialNoShowCount, label: "trials que faltaram", detail: "Pode ser no-show — confirmar e reagendar", cta: "Reagendar", tone: "#00E5A0", href: "/dashboard/trials" },
@@ -296,7 +319,7 @@ export default function DashboardPage() {
           {/* KPICard.icon color is set by the card's icon-box via color:tone — pass icons without style prop */}
           <KPICard icon={<UsersIcon className="w-3.5 h-3.5" />} label="Subscrições activas" value={subs.length} sub={`${groupSubsCount} grupo · ${ptCount} PT`} tone="#3D7DFF" trendDir="up" trendValue={`+${subs.length}`} onClick={() => router.push("/dashboard/subscribers")} />
           <KPICard icon={<TrendIcon className="w-3.5 h-3.5" />} label="Churn (30d)" value={churn.length} sub={`${churnPct}% — sem aulas em 30d`} tone="#FFB627" trendDir={churnPct > 10 ? "down" : "flat"} trendValue={`${churnPct}%`} onClick={() => router.push("/dashboard/churn")} />
-          <KPICard icon={<CardIcon className="w-3.5 h-3.5" />} label="Pagamentos falhados" value={failed.length} sub="Memberships ended" tone="#FF3D2E" trendDir={failed.length > 0 ? "down" : "flat"} trendValue={`${failed.length}`} onClick={() => router.push("/dashboard/failed")} />
+          <KPICard icon={<CardIcon className="w-3.5 h-3.5" />} label="Pagamentos falhados" value={failed.length} sub="Memberships ended" tone="#FF3D2E" trendDir={failed.length > 0 ? "down" : "flat"} trendValue={`${failed.length}`} onClick={() => router.push("/dashboard/subscribers?filter=churn")} />
           <KPICard icon={<ClockIcon className="w-3.5 h-3.5" />} label="Saúde dos Clientes" value={pausedOrCancelledCount} sub={`${pausedCount} pausadas · ${cancelledRunningCount} a terminar · +inadimplentes`} tone="#C7CCD6" trendDir="flat" trendValue={`${pausedOrCancelledCount}`} onClick={() => router.push("/dashboard/saude-clientes")} />
           <KPICard icon={<UserPlusIcon className="w-3.5 h-3.5" />} label="Total de Leads" value={leadsActionable.length + trialEnriched.length} sub={`Leads Hot ${trialAttendedCount} · Warm ${trialNoShowCount} · Cold ${leadsActionable.length}`} tone="#A6E22E" trendDir="up" trendValue={`+${leadsActionable.length + trialEnriched.length}`} onClick={() => router.push("/dashboard/leads")} />
           <KPICard icon={<TargetIcon className="w-3.5 h-3.5" />} label="Leads Hot" value={trialAttendedCount} sub="Foram à aula — fechar venda" tone="#FF2E88" trendDir="up" trendValue={`+${trialAttendedCount}`} onClick={() => router.push("/dashboard/leads")} />

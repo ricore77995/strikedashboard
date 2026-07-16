@@ -7,12 +7,13 @@ interface SubRowProps {
   name: string;
   plan: string;
   detail: string;
-  status: SubStatus;
+  status?: SubStatus;
   daysUntilRenewal?: number;
+  badges?: { status: SubStatus; daysUntilRenewal?: number }[];
   onClick?: () => void;
 }
 
-export function SubRow({ name, plan, detail, status, daysUntilRenewal, onClick }: SubRowProps) {
+export function SubRow({ name, plan, detail, status, daysUntilRenewal, badges, onClick }: SubRowProps) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -61,7 +62,11 @@ export function SubRow({ name, plan, detail, status, daysUntilRenewal, onClick }
           <span style={{ flexShrink: 0 }}>{detail}</span>
         </div>
       </div>
-      <StatusPill status={status} daysUntilRenewal={daysUntilRenewal} />
+      <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {(badges ?? (status ? [{ status, daysUntilRenewal }] : [])).map((b, i) => (
+          <StatusPill key={i} status={b.status} daysUntilRenewal={b.daysUntilRenewal} />
+        ))}
+      </div>
     </div>
   );
 }

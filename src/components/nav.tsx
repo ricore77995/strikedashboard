@@ -25,7 +25,6 @@ const ALL_LINKS = [
   { href: "/dashboard/trials", label: "Experimentais" },
   { href: "/dashboard/trials-no-conv", label: "Trial s/ conv." },
   { href: "/dashboard/churn", label: "Churn" },
-  { href: "/dashboard/failed", label: "Falhas" },
   { href: "/dashboard/classes", label: "Visitantes" },
   { href: "/dashboard/strikelab", label: "StrikeLab" },
   { href: "/dashboard/a-receber", label: "A Receber" },
