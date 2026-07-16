@@ -83,8 +83,26 @@ export default function ChurnPage() {
       if (!r.churnMonth) continue;
       counts.set(r.churnMonth, (counts.get(r.churnMonth) ?? 0) + 1);
     }
-    const months = Array.from(counts.keys()).sort();
-    return months.map((m) => ({ label: `${m.slice(5)}/${m.slice(2, 4)}`, value: counts.get(m) ?? 0 }));
+
+    // Fill every month in the report window so empty months (e.g. August) still appear.
+    const months: string[] = [];
+    const [startYear, startMonth] = report.period.startDate.split("-").map(Number);
+    const [endYear, endMonth] = report.period.endDate.split("-").map(Number);
+    let y = startYear;
+    let m = startMonth;
+    while (y < endYear || (y === endYear && m <= endMonth)) {
+      months.push(`${y}-${String(m).padStart(2, "0")}`);
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+
+    return months.map((month) => ({
+      label: `${month.slice(5)}/${month.slice(2, 4)}`,
+      value: counts.get(month) ?? 0,
+    }));
   })();
 
   const durationChartData = (() => {
